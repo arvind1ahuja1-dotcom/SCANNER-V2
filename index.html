@@ -169,8 +169,13 @@ if(html5QrCode){
 html5QrCode.stop();
 }
 
-document.getElementById("scanResult").innerHTML =
-"<b>QR Detected:</b><br><pre>"+decodedText+"</pre>";
+document.getElementById("scanResult").innerHTML = "Reading QR...";
+
+const lines = decodedText.split("\n");
+
+const familyId = lines[0].trim();
+
+fetchFamilyData(familyId);
 
 }
 
@@ -233,6 +238,80 @@ alert("Connection error: " + err);
 
 }
 
+async function fetchFamilyData(familyId){
+
+try{
+
+const res = await fetch(
+"https://script.google.com/macros/s/AKfycbwtFe1jh52oGJniIfoUyoqMhd0Vf0PoCwDeIXRWgBjrbfiqqXxR9wYGM-QqE2Wh4QA7/exec?api=1",
+{
+method:"POST",
+body: new URLSearchParams({
+action:"getFamily",
+familyId:familyId
+})
+}
+);
+
+const data = await res.json();
+
+if(data.status === "FOUND"){
+renderFamilyCard(data);
+}
+else{
+document.getElementById("scanResult").innerHTML =
+"Family not found.";
+}
+
+}
+catch(err){
+
+document.getElementById("scanResult").innerHTML =
+"Server error: " + err;
+
+}
+
+}
+
+function renderFamilyCard(data){
+
+let html = `
+<h2>Function: ${data.functionName}</h2>
+
+<h3>${data.primaryName} ${data.familyName} Family</h3>
+
+<div style="margin-top:20px;font-size:20px;">
+`;
+
+data.members.forEach(m => {
+
+html += `
+<div>
+<input type="checkbox" checked>
+${m}
+</div>
+`;
+
+});
+
+html += `
+</div>
+
+<div style="margin-top:20px;">
+<button style="background:#2e7d32;color:white;padding:12px 20px;border:none;border-radius:6px;">
+Confirm All Present
+</button>
+
+<button style="background:#c62828;color:white;padding:12px 20px;border:none;border-radius:6px;margin-left:10px;">
++ Additional Guests
+</button>
+</div>
+`;
+
+document.body.innerHTML = html;
+
+}
+  
 function openGallery(){
 
 if(html5QrCode){
