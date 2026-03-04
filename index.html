@@ -65,6 +65,60 @@ Login
 
 <script>
 
+function loadScanner(){
+
+document.body.innerHTML = `
+
+<h2>Wedding Entry Scanner</h2>
+
+<div id="reader" style="width:320px;margin:auto;"></div>
+
+<div id="scanResult" style="margin-top:30px;font-size:22px;"></div>
+
+`;
+
+startScanner();
+
+}
+
+function startScanner(){
+
+const scanner = new Html5Qrcode("reader");
+
+scanner.start(
+{ facingMode:"environment" },
+{ fps:10, qrbox:250 },
+onScanSuccess
+).catch(err=>{
+document.getElementById("scanResult").innerHTML =
+"Camera error: " + err;
+});
+
+}
+
+function onScanSuccess(decodedText){
+
+document.getElementById("scanResult").innerHTML =
+"<b>QR Scanned:</b><br>"+decodedText;
+
+}
+
+function checkLoginReady(){
+
+const mobile = document.getElementById("mobile").value.trim();
+const password = document.getElementById("password").value.trim();
+const button = document.getElementById("loginBtn");
+
+if(mobile.length === 10 && password.length === 6){
+button.disabled = false;
+button.style.opacity = "1";
+}else{
+button.disabled = true;
+button.style.opacity = "0.4";
+}
+
+}
+  
 async function login(){
 
 const mobile = document.getElementById("mobile").value.trim();
@@ -87,7 +141,7 @@ password:password
 const data = await res.json();
 
 if(data.status === "SUCCESS"){
-alert("Login successful");
+loadScanner();
 }
 else{
 alert("Invalid mobile or PIN");
