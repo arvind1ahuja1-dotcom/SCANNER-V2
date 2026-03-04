@@ -74,8 +74,7 @@ const res = await fetch(
 "https://script.google.com/macros/s/AKfycbwtFe1jh52oGJniIfoUyoqMhd0Vf0PoCwDeIXRWgBjrbfiqqXxR9wYGM-QqE2Wh4QA7/exec",
 {
 method:"POST",
-headers:{ "Content-Type":"application/json"},
-body: JSON.stringify({
+body: new URLSearchParams({
 action:"login",
 mobile:mobile,
 password:password
