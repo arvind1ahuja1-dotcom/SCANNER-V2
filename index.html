@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Permissions-Policy" content="camera=(self)">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
@@ -54,60 +54,26 @@ width:100%;
 
 <h2>Scanner Login</h2>
 
-<input
-id="mobile"
-type="tel"
-maxlength="10"
-pattern="[0-9]*"
-placeholder="Mobile Number"
-oninput="checkLoginReady()"
->
+<input id="mobile" type="tel" maxlength="10" placeholder="Mobile Number">
 
-<input 
-id="password"
-type="password"
-inputmode="numeric"
-pattern="[0-9]*"
-maxlength="6"
-placeholder="6 Digit PIN"
-oninput="checkLoginReady()"
->
+<input id="password" type="password" maxlength="6" placeholder="6 Digit PIN">
 
-<button id="loginBtn" onclick="login()" disabled style="opacity:0.4;">
-Login
-</button>
+<button onclick="login()">Login</button>
 
 </div>
 
 <script>
 
-function checkLoginReady(){
+async function login(){
 
 const mobile = document.getElementById("mobile").value.trim();
 const password = document.getElementById("password").value.trim();
-const button = document.getElementById("loginBtn");
-
-if(password.length === 6 && mobile.length >= 10){
-button.disabled = false;
-button.style.opacity = "1";
-}else{
-button.disabled = true;
-button.style.opacity = "0.4";
-}
-
-}
-
-
-async function login(){
-
-var mobile = document.getElementById("mobile").value.trim();
-var password = document.getElementById("password").value.trim();
 
 const res = await fetch(
 "https://script.google.com/macros/s/AKfycbwtFe1jh52oGJniIfoUyoqMhd0Vf0PoCwDeIXRWgBjrbfiqqXxR9wYGM-QqE2Wh4QA7/exec",
 {
 method:"POST",
-headers:{ "Content-Type":"application/json" },
+headers:{ "Content-Type":"application/json"},
 body: JSON.stringify({
 action:"login",
 mobile:mobile,
@@ -118,103 +84,11 @@ password:password
 
 const data = await res.json();
 
-handleLogin(data);
-
-}
-
-
-function handleLogin(res){
-
-document.body.innerHTML = "<h2>Login response received</h2>";
-
-if(res.status === "SUCCESS"){
-
-document.body.innerHTML += "<p>Login SUCCESS</p>";
-
-localStorage.setItem("scannerUser", JSON.stringify(res));
-
-document.body.innerHTML += "<p>Loading scanner UI...</p>";
-
-document.body.innerHTML += `
-
-<h2>Wedding Entry Scanner</h2>
-
-<button onclick="startScanner()" style="
-padding:16px;
-font-size:20px;
-margin-bottom:20px;
-background:#2e7d32;
-color:white;
-border:none;
-border-radius:6px;
-width:220px;
-">
-Start Scanner
-</button>
-
-<div id="reader" style="width:320px;margin:auto;border:2px solid red;height:300px;"></div>
-
-<div id="scanResult" style="margin-top:30px;font-size:22px;"></div>
-
-`;
-
-document.body.innerHTML += "<p>Attempting to start scanner...</p>";
-
-}
-else{
-
+if(data.status === "SUCCESS"){
+alert("Login successful");
+}else{
 alert("Invalid login");
-
 }
-
-}
-
-
-let scanLocked = false;
-
-
-function startScanner(){
-
-document.getElementById("scanResult").innerHTML = "Requesting camera...";
-
-Html5Qrcode.getCameras().then(cameras => {
-
-if(cameras && cameras.length){
-
-const cameraId = cameras[0].id;
-
-const scanner = new Html5Qrcode("reader");
-
-scanner.start(
-cameraId,
-{ fps:8, qrbox:250 },
-onScanSuccess
-).catch(err=>{
-document.getElementById("scanResult").innerHTML =
-"Scanner start error: " + err;
-});
-
-}
-else{
-document.getElementById("scanResult").innerHTML =
-"No cameras found.";
-}
-
-}).catch(err=>{
-document.getElementById("scanResult").innerHTML =
-"Camera permission error: " + err;
-});
-
-}
-
-
-function onScanSuccess(decodedText){
-
-if(scanLocked) return;
-scanLocked = true;
-
-document.getElementById("scanResult").innerHTML =
-"<b>QR Scanned:</b><br><pre>"+decodedText+"</pre>";
 
 }
 
