@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta http-equiv="Permissions-Policy" content="camera=(self)">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+text-align:center;
+background:#fafafa;
+padding:40px;
+}
+
+.login-box{
+max-width:400px;
+margin:auto;
+background:white;
+padding:40px;
+border-radius:10px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+input{
+width:100%;
+padding:14px;
+font-size:18px;
+margin-top:10px;
+margin-bottom:20px;
+}
+
+button{
+padding:16px;
+font-size:18px;
+background:#2e7d32;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+width:100%;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="login-box">
+
+<h2>Scanner Login</h2>
+
+<input id="mobile" placeholder="Mobile Number">
+
+<input id="password" type="password" placeholder="6 Digit PIN">
+
+<button onclick="login()">Login</button>
+
+</div>
+
+<script>
+
+function login(){
+
+var mobile = document.getElementById("mobile").value.trim();
+var password = document.getElementById("password").value.trim();
+
+google.script.run
+.withSuccessHandler(handleLogin)
+.validateLogin({
+mobile:mobile,
+password:password
+});
+
+}
+
+function handleLogin(res){
+
+document.body.innerHTML = "<h2>Login response received</h2>";
+
+if(res.status === "SUCCESS"){
+
+document.body.innerHTML += "<p>Login SUCCESS</p>";
+
+localStorage.setItem("scannerUser", JSON.stringify(res));
+
+document.body.innerHTML += "<p>Loading scanner UI...</p>";
+
+document.body.innerHTML += `
+
+<h2>Wedding Entry Scanner</h2>
+
+<button onclick="startScanner()" style="
+padding:16px;
+font-size:20px;
+margin-bottom:20px;
+background:#2e7d32;
+color:white;
+border:none;
+border-radius:6px;
+width:220px;
+">
+Start Scanner
+</button>
+
+<div id="reader" style="width:320px;margin:auto;border:2px solid red;height:300px;"></div>
+
+<div id="scanResult" style="margin-top:30px;font-size:22px;"></div>
+
+`;
+
+document.body.innerHTML += "<p>Attempting to start scanner...</p>";
+
+}
+else{
+
+alert("Invalid login");
+
+}
+
+}
+
+let scanLocked = false;
+
+function startScanner(){
+
+document.getElementById("scanResult").innerHTML = "Requesting camera...";
+
+Html5Qrcode.getCameras().then(cameras => {
+
+if(cameras && cameras.length){
+
+const cameraId = cameras[0].id;
+
+const scanner = new Html5Qrcode("reader");
+
+scanner.start(
+cameraId,
+{ fps:8, qrbox:250 },
+onScanSuccess
+).catch(err=>{
+document.getElementById("scanResult").innerHTML =
+"Scanner start error: " + err;
+});
+
+}
+else{
+document.getElementById("scanResult").innerHTML =
+"No cameras found.";
+}
+
+}).catch(err=>{
+document.getElementById("scanResult").innerHTML =
+"Camera permission error: " + err;
+});
+
+}
+
+function onScanSuccess(decodedText){
+
+if(scanLocked) return;
+scanLocked = true;
+
+document.getElementById("scanResult").innerHTML =
+"<b>QR Scanned:</b><br><pre>"+decodedText+"</pre>";
+
+}
+
+</script>
+
+</body>
+</html>
