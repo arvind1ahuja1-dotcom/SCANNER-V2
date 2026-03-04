@@ -73,6 +73,27 @@ document.body.innerHTML = `
 
 <div id="reader" style="width:320px;margin:auto;"></div>
 
+<div style="margin-top:20px;">
+<button onclick="openGallery()" style="
+padding:12px 20px;
+font-size:18px;
+background:#1976d2;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+">
+Scan From Photo
+</button>
+</div>
+
+<input 
+type="file" 
+id="qrFileInput" 
+accept="image/*" 
+style="display:none"
+>
+
 <div id="scanResult" style="margin-top:30px;font-size:22px;"></div>
 
 `;
@@ -154,6 +175,39 @@ alert("Connection error: " + err);
 
 }
 
+function openGallery(){
+
+document.getElementById("qrFileInput").click();
+
+}
+
+document.addEventListener("change", function(event){
+
+if(event.target.id === "qrFileInput"){
+
+const file = event.target.files[0];
+
+if(!file) return;
+
+const scanner = new Html5Qrcode("reader");
+
+scanner.scanFile(file, true)
+.then(decodedText => {
+
+onScanSuccess(decodedText);
+
+})
+.catch(err => {
+
+document.getElementById("scanResult").innerHTML =
+"QR not detected in image.";
+
+});
+
+}
+
+});
+  
 </script>
 
 </body>
