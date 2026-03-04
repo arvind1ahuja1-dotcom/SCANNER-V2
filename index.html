@@ -99,6 +99,28 @@ style="display:none"
 
 <div id="scanResult" style="margin-top:30px;font-size:22px;"></div>
 
+<div style="margin-top:20px;">
+<button onclick="resetScanner()" style="
+padding:12px 20px;
+font-size:18px;
+background:#2e7d32;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+">
+Scan Next Guest
+</button>
+</div>
+
+function resetScanner(){
+
+scanLocked = false;
+
+loadScanner();
+
+}
+
 `;
 
 startScanner();
@@ -156,6 +178,10 @@ document.getElementById("scanResult").innerHTML =
 }
 
 function onScanSuccess(decodedText){
+
+if(html5QrCode){
+html5QrCode.stop();
+}
 
 document.getElementById("scanResult").innerHTML =
 "<b>QR Detected:</b><br><pre>"+decodedText+"</pre>";
