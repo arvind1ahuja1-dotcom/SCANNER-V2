@@ -65,6 +65,9 @@ Login
 
 <script>
 
+let html5QrCode;
+let scanLocked = false;
+
 function loadScanner(){
 
 document.body.innerHTML = `
@@ -104,15 +107,25 @@ startScanner();
 
 function startScanner(){
 
-const scanner = new Html5Qrcode("reader");
+html5QrCode = new Html5Qrcode("reader");
 
-scanner.start(
-{ facingMode:"environment" },
-{ fps:10, qrbox:250 },
-onScanSuccess
-).catch(err=>{
+html5QrCode.start(
+{ facingMode: "environment" },
+{ fps: 10, qrbox: 250 },
+(decodedText) => {
+
+if(scanLocked) return;
+
+scanLocked = true;
+
+onScanSuccess(decodedText);
+
+}
+).catch(err => {
+
 document.getElementById("scanResult").innerHTML =
 "Camera error: " + err;
+
 });
 
 }
@@ -120,7 +133,7 @@ document.getElementById("scanResult").innerHTML =
 function onScanSuccess(decodedText){
 
 document.getElementById("scanResult").innerHTML =
-"<b>QR Scanned:</b><br>"+decodedText;
+"<b>QR Detected:</b><br><pre>"+decodedText+"</pre>";
 
 }
 
@@ -181,18 +194,16 @@ document.getElementById("qrFileInput").click();
 
 }
 
-document.addEventListener("change", function(event){
+document.getElementById("qrFileInput").addEventListener("change", function(){
 
-if(event.target.id === "qrFileInput"){
-
-const file = event.target.files[0];
+const file = this.files[0];
 
 if(!file) return;
 
-const scanner = new Html5Qrcode("reader");
-
-scanner.scanFile(file, true)
+html5QrCode.scanFile(file, true)
 .then(decodedText => {
+
+scanLocked = true;
 
 onScanSuccess(decodedText);
 
@@ -203,8 +214,6 @@ document.getElementById("scanResult").innerHTML =
 "QR not detected in image.";
 
 });
-
-}
 
 });
   
