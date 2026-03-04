@@ -68,6 +68,8 @@ async function login(){
 const mobile = document.getElementById("mobile").value.trim();
 const password = document.getElementById("password").value.trim();
 
+try{
+
 const res = await fetch(
 "https://script.google.com/macros/s/AKfycbwtFe1jh52oGJniIfoUyoqMhd0Vf0PoCwDeIXRWgBjrbfiqqXxR9wYGM-QqE2Wh4QA7/exec",
 {
@@ -85,8 +87,14 @@ const data = await res.json();
 
 if(data.status === "SUCCESS"){
 alert("Login successful");
-}else{
-alert("Invalid login");
+}
+else{
+alert("Invalid mobile or PIN");
+}
+
+}
+catch(err){
+alert("Connection error: " + err);
 }
 
 }
