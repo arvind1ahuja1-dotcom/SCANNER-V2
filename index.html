@@ -235,7 +235,23 @@ alert("Connection error: " + err);
 
 function openGallery(){
 
+if(html5QrCode){
+html5QrCode.stop().then(() => {
+
 document.getElementById("qrFileInput").click();
+
+}).catch(err => {
+
+document.getElementById("scanResult").innerHTML =
+"Camera stop error: " + err;
+
+});
+}
+else{
+
+document.getElementById("qrFileInput").click();
+
+}
 
 }
 
