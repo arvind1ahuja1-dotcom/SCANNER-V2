@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Permissions-Policy" content="camera=(self)">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
@@ -45,6 +45,7 @@ width:100%;
 }
 
 </style>
+
 </head>
 
 <body>
@@ -53,15 +54,46 @@ width:100%;
 
 <h2>Scanner Login</h2>
 
-<input id="mobile" placeholder="Mobile Number">
+<input 
+id="mobile"
+placeholder="Mobile Number"
+oninput="checkLoginReady()"
+>
 
-<input id="password" type="password" placeholder="6 Digit PIN">
+<input 
+id="password"
+type="password"
+inputmode="numeric"
+pattern="[0-9]*"
+maxlength="6"
+placeholder="6 Digit PIN"
+oninput="checkLoginReady()"
+>
 
-<button onclick="login()">Login</button>
+<button id="loginBtn" onclick="login()" disabled style="opacity:0.4;">
+Login
+</button>
 
 </div>
 
 <script>
+
+function checkLoginReady(){
+
+const mobile = document.getElementById("mobile").value.trim();
+const password = document.getElementById("password").value.trim();
+const button = document.getElementById("loginBtn");
+
+if(password.length === 6 && mobile.length >= 10){
+button.disabled = false;
+button.style.opacity = "1";
+}else{
+button.disabled = true;
+button.style.opacity = "0.4";
+}
+
+}
+
 
 async function login(){
 
@@ -72,6 +104,7 @@ const res = await fetch(
 "https://script.google.com/macros/s/AKfycbwtFe1jh52oGJniIfoUyoqMhd0Vf0PoCwDeIXRWgBjrbfiqqXxR9wYGM-QqE2Wh4QA7/exec",
 {
 method:"POST",
+headers:{ "Content-Type":"application/json" },
 body: JSON.stringify({
 action:"login",
 mobile:mobile,
@@ -85,6 +118,7 @@ const data = await res.json();
 handleLogin(data);
 
 }
+
 
 function handleLogin(res){
 
@@ -132,7 +166,9 @@ alert("Invalid login");
 
 }
 
+
 let scanLocked = false;
+
 
 function startScanner(){
 
@@ -168,6 +204,7 @@ document.getElementById("scanResult").innerHTML =
 
 }
 
+
 function onScanSuccess(decodedText){
 
 if(scanLocked) return;
@@ -177,7 +214,7 @@ document.getElementById("scanResult").innerHTML =
 "<b>QR Scanned:</b><br><pre>"+decodedText+"</pre>";
 
 }
-  
+
 </script>
 
 </body>
