@@ -177,18 +177,6 @@ document.getElementById("scanResult").innerHTML =
 "<b>QR Scanned:</b><br><pre>"+decodedText+"</pre>";
 
 }
-
-function doPost(e){
-
-const data = JSON.parse(e.postData.contents);
-
-if(data.action === "login"){
-return ContentService
-.createTextOutput(JSON.stringify(validateLogin(data)))
-.setMimeType(ContentService.MimeType.JSON);
-}
-
-}
   
 </script>
 
