@@ -103,6 +103,31 @@ style="display:none"
 
 startScanner();
 
+/* attach listener AFTER element exists */
+
+document.getElementById("qrFileInput").addEventListener("change", function(){
+
+const file = this.files[0];
+
+if(!file) return;
+
+html5QrCode.scanFile(file, true)
+.then(decodedText => {
+
+scanLocked = true;
+
+onScanSuccess(decodedText);
+
+})
+.catch(err => {
+
+document.getElementById("scanResult").innerHTML =
+"QR not detected in image.";
+
+});
+
+});
+
 }
 
 function startScanner(){
