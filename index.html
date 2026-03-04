@@ -51,6 +51,7 @@ width:100%;
 <body>
 
 <div class="login-box">
+
 <h2>TEST VERSION 99</h2>
 
 <input id="mobile" type="tel" maxlength="10" placeholder="Mobile Number" oninput="checkLoginReady()">
@@ -84,18 +85,12 @@ background:#1976d2;
 color:white;
 border:none;
 border-radius:6px;
-cursor:pointer;
-">
+cursor:pointer;">
 Scan From Photo
 </button>
 </div>
 
-<input 
-type="file" 
-id="qrFileInput" 
-accept="image/*" 
-style="display:none"
->
+<input type="file" id="qrFileInput" accept="image/*" style="display:none">
 
 <div id="scanResult" style="margin-top:30px;font-size:22px;"></div>
 
@@ -107,19 +102,10 @@ background:#2e7d32;
 color:white;
 border:none;
 border-radius:6px;
-cursor:pointer;
-">
+cursor:pointer;">
 Scan Next Guest
 </button>
 </div>
-
-function resetScanner(){
-
-scanLocked = false;
-
-loadScanner();
-
-}
 
 `;
 
@@ -188,6 +174,14 @@ document.getElementById("scanResult").innerHTML =
 
 }
 
+function resetScanner(){
+
+scanLocked = false;
+
+loadScanner();
+
+}
+
 function checkLoginReady(){
 
 const mobile = document.getElementById("mobile").value.trim();
@@ -203,7 +197,7 @@ button.style.opacity = "0.4";
 }
 
 }
-  
+
 async function login(){
 
 const mobile = document.getElementById("mobile").value.trim();
@@ -244,7 +238,7 @@ function openGallery(){
 document.getElementById("qrFileInput").click();
 
 }
-  
+
 </script>
 
 </body>
