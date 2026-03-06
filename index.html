@@ -1,338 +1,207 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
 
 body{
 font-family:Arial;
 text-align:center;
-background:#fafafa;
-padding:40px;
-}
-
-.login-box{
-max-width:400px;
-margin:auto;
-background:white;
-padding:40px;
-border-radius:10px;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);
+background:#f5f5f5;
 }
 
 input{
-width:100%;
-padding:14px;
-font-size:18px;
-margin-top:10px;
-margin-bottom:20px;
+font-size:22px;
+padding:10px;
+margin:10px;
+width:250px;
 }
 
 button{
-padding:16px;
-font-size:18px;
-background:#2e7d32;
-color:white;
-border:none;
-border-radius:6px;
-cursor:pointer;
-width:100%;
+font-size:22px;
+padding:15px;
+margin:10px;
 }
 
+.member{
+display:flex;
+justify-content:space-between;
+width:320px;
+margin:auto;
+font-size:22px;
+}
+
+.green{background:#2e7d32;color:white;height:100vh;}
+.yellow{background:#f9a825;height:100vh;}
 </style>
 
 </head>
 
 <body>
 
-<div class="login-box">
+<div id="login">
 
-<h2>TEST VERSION 99</h2>
+<h2>Scanner Login</h2>
 
-<input id="mobile" type="tel" maxlength="10" placeholder="Mobile Number" oninput="checkLoginReady()">
+<input id="mobile" placeholder="Mobile" maxlength="10" inputmode="numeric"><br>
 
-<input id="password" type="password" maxlength="6" placeholder="6 Digit PIN" oninput="checkLoginReady()">
+<input id="pin" placeholder="PIN" maxlength="6" inputmode="numeric"><br>
 
-<button id="loginBtn" onclick="login()" disabled style="opacity:0.4;">
-Login
-</button>
+<button onclick="login()">OKAY</button>
+
+</div>
+
+<div id="scanner" style="display:none">
+
+<h3 id="func"></h3>
+
+<div id="reader" style="width:320px;margin:auto"></div>
+
+<div id="result"></div>
 
 </div>
 
 <script>
 
-let html5QrCode;
-let scanLocked = false;
+const API_URL="https://script.google.com/macros/s/AKfycbwtFe1jh52oGJniIfoUyoqMhd0Vf0PoCwDeIXRWgBjrbfiqqXxR9wYGM-QqE2Wh4QA7/exec";
 
-function loadScanner(){
-
-document.body.innerHTML = `
-
-<h2>Wedding Entry Scanner</h2>
-
-<div id="reader" style="width:320px;margin:auto;"></div>
-
-<div style="margin-top:20px;">
-<button onclick="openGallery()" style="
-padding:12px 20px;
-font-size:18px;
-background:#1976d2;
-color:white;
-border:none;
-border-radius:6px;
-cursor:pointer;">
-Scan From Photo
-</button>
-</div>
-
-<input type="file" id="qrFileInput" accept="image/*" style="display:none">
-
-<div id="scanResult" style="margin-top:30px;font-size:22px;"></div>
-
-<div style="margin-top:20px;">
-<button onclick="resetScanner()" style="
-padding:12px 20px;
-font-size:18px;
-background:#2e7d32;
-color:white;
-border:none;
-border-radius:6px;
-cursor:pointer;">
-Scan Next Guest
-</button>
-</div>
-
-`;
-
-startScanner();
-
-/* attach listener AFTER element exists */
-
-document.getElementById("qrFileInput").addEventListener("change", function(){
-
-const file = this.files[0];
-
-if(!file) return;
-
-html5QrCode.scanFile(file, true)
-.then(decodedText => {
-
-scanLocked = true;
-
-onScanSuccess(decodedText);
-
-})
-.catch(err => {
-
-document.getElementById("scanResult").innerHTML =
-"QR not detected in image.";
-
-});
-
-});
-
-}
-
-function startScanner(){
-
-html5QrCode = new Html5Qrcode("reader");
-
-html5QrCode.start(
-{ facingMode: "environment" },
-{ fps: 10, qrbox: 250 },
-(decodedText) => {
-
-if(scanLocked) return;
-
-scanLocked = true;
-
-onScanSuccess(decodedText);
-
-}
-).catch(err => {
-
-document.getElementById("scanResult").innerHTML =
-"Camera error: " + err;
-
-});
-
-}
-
-function onScanSuccess(decodedText){
-
-if(html5QrCode){
-html5QrCode.stop();
-}
-
-document.getElementById("scanResult").innerHTML = "Reading QR...";
-
-const lines = decodedText.split("\n");
-
-const familyId = lines[0].trim();
-
-fetchFamilyData(familyId);
-
-}
-
-function resetScanner(){
-
-scanLocked = false;
-
-loadScanner();
-
-}
-
-function checkLoginReady(){
-
-const mobile = document.getElementById("mobile").value.trim();
-const password = document.getElementById("password").value.trim();
-const button = document.getElementById("loginBtn");
-
-if(mobile.length === 10 && password.length === 6){
-button.disabled = false;
-button.style.opacity = "1";
-}else{
-button.disabled = true;
-button.style.opacity = "0.4";
-}
-
-}
+let user=null;
+let activeFunction=null;
 
 async function login(){
 
-const mobile = document.getElementById("mobile").value.trim();
-const password = document.getElementById("password").value.trim();
+let mobile=document.getElementById("mobile").value;
+let pin=document.getElementById("pin").value;
 
-try{
+let res=await fetch(API_URL+
+"?action=login&mobile="+mobile+"&pin="+pin);
 
-const res = await fetch(
-"https://script.google.com/macros/s/AKfycbwtFe1jh52oGJniIfoUyoqMhd0Vf0PoCwDeIXRWgBjrbfiqqXxR9wYGM-QqE2Wh4QA7/exec?api=1",
-{
-method:"POST",
-body: new URLSearchParams({
-action:"login",
-mobile:mobile,
-password:password
-})
-}
-);
+let data=await res.json();
 
-const data = await res.json();
-
-if(data.status === "SUCCESS"){
-loadScanner();
-}
-else{
-alert("Invalid mobile or PIN");
+if(!data.success){
+alert("Incorrect Mobile or PIN");
+return;
 }
 
-}
-catch(err){
-alert("Connection error: " + err);
-}
+user=data.name;
+
+document.getElementById("login").style.display="none";
+document.getElementById("scanner").style.display="block";
+
+loadFunction();
 
 }
 
-async function fetchFamilyData(familyId){
+async function loadFunction(){
 
-try{
+let res=await fetch(API_URL+"?action=function");
 
-const res = await fetch(
-"https://script.google.com/macros/s/AKfycbwtFe1jh52oGJniIfoUyoqMhd0Vf0PoCwDeIXRWgBjrbfiqqXxR9wYGM-QqE2Wh4QA7/exec?api=1",
-{
-method:"POST",
-body: new URLSearchParams({
-action:"getFamily",
-familyId:familyId
-})
-}
-);
+let data=await res.json();
 
-const data = await res.json();
-
-if(data.status === "FOUND"){
-renderFamilyCard(data);
-}
-else{
-document.getElementById("scanResult").innerHTML =
-"Family not found.";
+if(!data.active){
+alert("No active function");
+return;
 }
 
-}
-catch(err){
+activeFunction=data.functionId;
 
-document.getElementById("scanResult").innerHTML =
-"Server error: " + err;
+document.getElementById("func").innerText=data.functionName;
 
 }
 
+function onScanSuccess(decoded){
+
+let lines=decoded.split("\n");
+
+let familyId=lines[0].trim();
+
+loadFamily(familyId);
+
 }
 
-function renderFamilyCard(data){
+async function loadFamily(fid){
 
-let html = `
-<h2>Function: ${data.functionName}</h2>
+let res=await fetch(API_URL+"?action=family&family="+fid);
 
-<h3>${data.primaryName} ${data.familyName} Family</h3>
+let members=await res.json();
 
-<div style="margin-top:20px;font-size:20px;">
-`;
+let html="<h3>"+fid+"</h3>";
 
-data.members.forEach(m => {
+members.forEach((m,i)=>{
 
-html += `
-<div>
-<input type="checkbox" checked>
-${m}
+if(m.functionId!=activeFunction) return;
+
+html+=`
+<div class="member">
+<span>${m.name}</span>
+<input type="checkbox" checked id="m${i}">
 </div>
 `;
-
 });
 
-html += `
-</div>
-
-<div style="margin-top:20px;">
-<button style="background:#2e7d32;color:white;padding:12px 20px;border:none;border-radius:6px;">
-Confirm All Present
-</button>
-
-<button style="background:#c62828;color:white;padding:12px 20px;border:none;border-radius:6px;margin-left:10px;">
-+ Additional Guests
-</button>
-</div>
+html+=`
+<button onclick="submit('${fid}')">Submit</button>
 `;
 
-document.body.innerHTML = html;
+document.getElementById("result").innerHTML=html;
 
 }
-  
-function openGallery(){
 
-if(html5QrCode){
-html5QrCode.stop().then(() => {
+async function submit(fid){
 
-document.getElementById("qrFileInput").click();
+let boxes=document.querySelectorAll("input[type=checkbox]");
 
-}).catch(err => {
+let names=[];
+let arrived=0;
 
-document.getElementById("scanResult").innerHTML =
-"Camera stop error: " + err;
-
+boxes.forEach(b=>{
+if(b.checked){
+arrived++;
+names.push(b.parentElement.innerText.trim());
+}
 });
-}
-else{
 
-document.getElementById("qrFileInput").click();
+let payload={
+action:"submit",
+functionId:activeFunction,
+familyId:fid,
+primary:names[0],
+family:"",
+registered:boxes.length,
+arrived:arrived,
+extra:0,
+members:names.join(","),
+device:user,
+method:"QR Scan"
+};
+
+let res=await fetch(API_URL,{
+method:"POST",
+body:JSON.stringify(payload)
+});
+
+let data=await res.json();
+
+if(data.duplicate){
+alert("Already checked in");
+return;
+}
+
+document.body.className="green";
+document.body.innerHTML="<h1>WELCOME</h1>";
 
 }
 
-}
+const scanner=new Html5QrcodeScanner(
+"reader",
+{fps:10,qrbox:250}
+);
+
+scanner.render(onScanSuccess);
 
 </script>
 
