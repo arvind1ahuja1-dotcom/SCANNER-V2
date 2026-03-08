@@ -247,6 +247,7 @@ console.log("QR decoded:",decoded);
 let lines = decoded.split("\n");
 let familyId = lines[0].replace("\r","").trim();
 
+document.getElementById("reader").style.display="none";
 loadFamily(familyId);
 
 }
@@ -259,20 +260,61 @@ let res=await fetch(API_URL+
 
 let data=await res.json();
 
-let html="<h3>"+data.familyName+" Family</h3>";
+let html=`
+<div class="familyCard">
+
+<h3 style="margin-bottom:10px">
+${data.familyName} Family
+</h3>
+
+<div style="margin-bottom:18px;font-size:18px;color:#444">
+Click on names or tick boxes to untick absent guests
+</div>
+`;
 
 data.members.forEach((m,i)=>{
 
 html+=`
-<div class="member">
+<label class="member">
 <span>${m.name}</span>
 <input type="checkbox" checked id="m${i}">
-</div>
+</label>
 `;
 
 });
 
-html+=`<button onclick="submit('${data.family}','${data.familyName}')">SUBMIT</button>`;
+html+=`
+<div style="display:flex;justify-content:space-between;margin-top:25px">
+
+<button
+style="
+background:#ed6c02;
+color:white;
+padding:14px 20px;
+border:none;
+font-size:20px;
+border-radius:8px
+"
+>
++ Guests
+</button>
+
+<button
+onclick="submit('${data.family}','${data.familyName}')"
+style="
+background:#2e7d32;
+color:white;
+padding:14px 20px;
+border:none;
+font-size:20px;
+border-radius:8px
+"
+>
+SUBMIT
+</button>
+
+</div>
+`;
 
 document.getElementById("familyCard").innerHTML=html;
 
@@ -323,8 +365,21 @@ return;
 
 }
 
+if(arrived==boxes.length){
 document.body.className="green";
-document.body.innerHTML="<h1>WELCOME</h1>";
+}else{
+document.body.style.background="#ed6c02";
+document.body.style.color="white";
+}
+document.body.innerHTML=`
+<h1 style="font-size:42px">
+WELCOME
+</h1>
+
+<div style="font-size:26px;margin-top:20px">
+${names[0]} ${fname} Family
+</div>
+`;
 
 }
 
