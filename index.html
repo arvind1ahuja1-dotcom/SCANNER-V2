@@ -76,7 +76,10 @@ OKAY
 
 </button>
 
+<p id="msg" style="color:red"></p>
+
 </div>
+
 
 <div id="scanner" style="display:none">
 
@@ -88,12 +91,14 @@ OKAY
 
 </div>
 
+
 <script>
 
 const API_URL="https://script.google.com/macros/s/AKfycbwtFe1jh52oGJniIfoUyoqMhd0Vf0PoCwDeIXRWgBjrbfiqqXxR9wYGM-QqE2Wh4QA7/exec";
 
 let userName="";
 let activeFunction="";
+
 
 function validateLogin(){
 
@@ -115,19 +120,23 @@ btn.style.background="#9ccc65";
 
 }
 
+
 async function login(){
+
+document.getElementById("msg").innerText="Connecting...";
 
 let mobile=document.getElementById("mobile").value;
 let pin=document.getElementById("pin").value;
 
-let res=await fetch(API_URL+
-"?action=login&mobile="+mobile+"&pin="+pin);
+try{
+
+let res=await fetch(API_URL+"?action=login&mobile="+mobile+"&pin="+pin);
 
 let data=await res.json();
 
 if(!data.success){
 
-alert("Incorrect Mobile or PIN");
+document.getElementById("msg").innerText="Incorrect Mobile or PIN";
 return;
 
 }
@@ -139,7 +148,14 @@ document.getElementById("scanner").style.display="block";
 
 loadFunction();
 
+}catch(err){
+
+document.getElementById("msg").innerText="Connection error: "+err;
+
 }
+
+}
+
 
 async function loadFunction(){
 
@@ -162,6 +178,7 @@ startScanner();
 
 }
 
+
 function startScanner(){
 
 const scanner=new Html5QrcodeScanner(
@@ -173,15 +190,17 @@ scanner.render(onScan);
 
 }
 
+
 function onScan(decoded){
 
 let lines=decoded.split("\n");
 
-let fid=lines[0].trim();
+let familyId=lines[0].trim();
 
-loadFamily(fid);
+loadFamily(familyId);
 
 }
+
 
 async function loadFamily(fid){
 
@@ -208,6 +227,7 @@ html+=`<button onclick="submit('${data.family}','${data.familyName}')">Submit</b
 document.getElementById("familyCard").innerHTML=html;
 
 }
+
 
 async function submit(fid,fname){
 
@@ -254,7 +274,6 @@ return;
 }
 
 document.body.className="green";
-
 document.body.innerHTML="<h1>WELCOME</h1>";
 
 }
