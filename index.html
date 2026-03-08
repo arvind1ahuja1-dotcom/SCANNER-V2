@@ -96,9 +96,34 @@ OKAY
 
 const API_URL="https://script.google.com/macros/s/AKfycbwfBi1pESnwh8ZMSDPLATpjZHEMV3npR6146FfdMOSrbXvTlJ7f7g4ZmG1dojHulhY/exec";
 
+const SESSION_HOURS = 6;
+
 let userName="";
 let activeFunction="";
 
+window.onload = function(){
+
+let user = localStorage.getItem("scannerUser");
+let time = localStorage.getItem("loginTime");
+
+if(user && time){
+
+let diff = (Date.now() - time) / 3600000;
+
+if(diff < SESSION_HOURS){
+
+userName = user;
+
+document.getElementById("login").style.display="none";
+document.getElementById("scanner").style.display="block";
+
+loadFunction();
+
+}
+
+}
+
+}
 
 function validateLogin(){
 
@@ -190,7 +215,11 @@ rememberLastUsedCamera: true,
 supportedScanTypes: [
 Html5QrcodeScanType.SCAN_TYPE_CAMERA,
 Html5QrcodeScanType.SCAN_TYPE_FILE
-]
+],
+formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
+experimentalFeatures: {
+useBarCodeDetectorIfSupported: true
+}
 },
 false
 );
