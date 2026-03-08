@@ -247,7 +247,7 @@ console.log("QR decoded:",decoded);
 let lines = decoded.split("\n");
 let familyId = lines[0].replace("\r","").trim();
 
-document.getElementById("reader").style.display="none";
+document.querySelector("#reader video")?.remove();
 loadFamily(familyId);
 
 }
