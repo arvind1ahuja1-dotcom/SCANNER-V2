@@ -33,10 +33,9 @@ justify-content:space-between;
 align-items:center;
 width:92%;
 max-width:500px;
-margin:12px auto;
+margin:10px auto;
 font-size:24px;
-padding:10px 15px;
-border-bottom:1px solid #ddd;
+padding:8px 10px;
 }
 
 .green{
@@ -239,15 +238,11 @@ let scanLock=false;
 function onScan(decoded){
 
 if(scanLock) return;
-
 scanLock=true;
 
-console.log("QR decoded:",decoded);
-
 let lines = decoded.split("\n");
-let familyId = lines[0].replace("\r","").trim();
+let familyId = lines[0].trim();
 
-document.querySelector("#reader video")?.remove();
 collapseCamera();
 loadFamily(familyId);
 
@@ -408,11 +403,10 @@ SCAN NEXT GUEST
 
 function collapseCamera(){
 
-let video=document.querySelector("#reader video");
+const reader = document.getElementById("reader");
 
-if(video){
-video.remove();
-}
+/* remove the entire scanner UI */
+reader.innerHTML = "";
 
 }
 
