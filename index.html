@@ -18,12 +18,12 @@ input{
 font-size:22px;
 padding:10px;
 margin:10px;
-width:250px;
+width:240px;
 }
 
 button{
 font-size:22px;
-padding:15px;
+padding:14px;
 margin:10px;
 }
 
@@ -33,10 +33,18 @@ justify-content:space-between;
 width:320px;
 margin:auto;
 font-size:22px;
+padding:6px;
 }
 
-.green{background:#2e7d32;color:white;height:100vh;}
-.yellow{background:#f9a825;height:100vh;}
+.green{
+background:#2e7d32;
+color:white;
+height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+}
+
 </style>
 
 </head>
@@ -47,23 +55,36 @@ font-size:22px;
 
 <h2>Scanner Login</h2>
 
-<input id="mobile" placeholder="Mobile" maxlength="10" inputmode="numeric" oninput="validateLogin()"><br>
+<input id="mobile" maxlength="10" inputmode="numeric"
+placeholder="Mobile"
+oninput="validateLogin()">
 
-<input id="pin" placeholder="PIN" maxlength="6" inputmode="numeric" oninput="validateLogin()"><br>
+<br>
 
-<button id="loginBtn" onclick="login()" disabled style="background:#9ccc65;color:white;">
+<input id="pin" maxlength="6" inputmode="numeric"
+placeholder="PIN"
+oninput="validateLogin()">
+
+<br>
+
+<button id="loginBtn"
+onclick="login()"
+disabled
+style="background:#9ccc65;color:white">
+
 OKAY
+
 </button>
 
 </div>
 
 <div id="scanner" style="display:none">
 
-<h3 id="func"></h3>
+<h3 id="functionTitle"></h3>
 
 <div id="reader" style="width:320px;margin:auto"></div>
 
-<div id="result"></div>
+<div id="familyCard"></div>
 
 </div>
 
@@ -71,8 +92,28 @@ OKAY
 
 const API_URL="https://script.google.com/macros/s/AKfycbwtFe1jh52oGJniIfoUyoqMhd0Vf0PoCwDeIXRWgBjrbfiqqXxR9wYGM-QqE2Wh4QA7/exec";
 
-let user=null;
-let activeFunction=null;
+let userName="";
+let activeFunction="";
+
+function validateLogin(){
+
+let m=document.getElementById("mobile").value;
+let p=document.getElementById("pin").value;
+let btn=document.getElementById("loginBtn");
+
+if(m.length==10 && p.length==6){
+
+btn.disabled=false;
+btn.style.background="#2e7d32";
+
+}else{
+
+btn.disabled=true;
+btn.style.background="#9ccc65";
+
+}
+
+}
 
 async function login(){
 
@@ -87,11 +128,11 @@ let data=await res.json();
 if(!data.success){
 
 alert("Incorrect Mobile or PIN");
-
 return;
+
 }
 
-user=data.name;
+userName=data.name;
 
 document.getElementById("login").style.display="none";
 document.getElementById("scanner").style.display="block";
@@ -102,42 +143,56 @@ loadFunction();
 
 async function loadFunction(){
 
-let res=await fetch(API_URL+"?action=function");
+let res=await fetch(API_URL+"?action=active");
 
 let data=await res.json();
 
 if(!data.active){
+
 alert("No active function");
 return;
-}
-
-activeFunction=data.functionId;
-
-document.getElementById("func").innerText=data.functionName;
 
 }
 
-function onScanSuccess(decoded){
+activeFunction=data.id;
+
+document.getElementById("functionTitle").innerText=data.name;
+
+startScanner();
+
+}
+
+function startScanner(){
+
+const scanner=new Html5QrcodeScanner(
+"reader",
+{fps:10,qrbox:250}
+);
+
+scanner.render(onScan);
+
+}
+
+function onScan(decoded){
 
 let lines=decoded.split("\n");
 
-let familyId=lines[0].trim();
+let fid=lines[0].trim();
 
-loadFamily(familyId);
+loadFamily(fid);
 
 }
 
 async function loadFamily(fid){
 
-let res=await fetch(API_URL+"?action=family&family="+fid);
+let res=await fetch(API_URL+
+"?action=family&family="+fid+"&func="+activeFunction);
 
-let members=await res.json();
+let data=await res.json();
 
-let html="<h3>"+fid+"</h3>";
+let html="<h3>"+data.familyName+" Family</h3>";
 
-members.forEach((m,i)=>{
-
-if(m.functionId!=activeFunction) return;
+data.members.forEach((m,i)=>{
 
 html+=`
 <div class="member">
@@ -145,17 +200,16 @@ html+=`
 <input type="checkbox" checked id="m${i}">
 </div>
 `;
+
 });
 
-html+=`
-<button onclick="submit('${fid}')">Submit</button>
-`;
+html+=`<button onclick="submit('${data.family}','${data.familyName}')">Submit</button>`;
 
-document.getElementById("result").innerHTML=html;
+document.getElementById("familyCard").innerHTML=html;
 
 }
 
-async function submit(fid){
+async function submit(fid,fname){
 
 let boxes=document.querySelectorAll("input[type=checkbox]");
 
@@ -163,23 +217,25 @@ let names=[];
 let arrived=0;
 
 boxes.forEach(b=>{
+
 if(b.checked){
 arrived++;
 names.push(b.parentElement.innerText.trim());
 }
+
 });
 
 let payload={
 action:"submit",
-functionId:activeFunction,
-familyId:fid,
+func:activeFunction,
+family:fid,
 primary:names[0],
-family:"",
+familyName:fname,
 registered:boxes.length,
 arrived:arrived,
 extra:0,
-members:names.join(","),
-device:user,
+names:names.join(", "),
+device:userName,
 method:"QR Scan"
 };
 
@@ -191,39 +247,15 @@ body:JSON.stringify(payload)
 let data=await res.json();
 
 if(data.duplicate){
-alert("Already checked in");
+
+alert("Family already checked in");
 return;
+
 }
 
 document.body.className="green";
+
 document.body.innerHTML="<h1>WELCOME</h1>";
-
-}
-
-const scanner=new Html5QrcodeScanner(
-"reader",
-{fps:10,qrbox:250}
-);
-
-scanner.render(onScanSuccess);
-
-  function validateLogin(){
-
-let mobile=document.getElementById("mobile").value;
-let pin=document.getElementById("pin").value;
-let btn=document.getElementById("loginBtn");
-
-if(mobile.length==10 && pin.length==6){
-
-btn.disabled=false;
-btn.style.background="#2e7d32";
-
-}else{
-
-btn.disabled=true;
-btn.style.background="#9ccc65";
-
-}
 
 }
 
