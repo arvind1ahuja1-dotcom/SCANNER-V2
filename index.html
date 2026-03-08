@@ -204,7 +204,7 @@ activeFunction=data.id;
 
 document.getElementById("functionTitle").innerText=data.name;
 
-startScanner();
+resetScanner();
 
 }
 
@@ -238,12 +238,15 @@ let scanLock=false;
 function onScan(decoded){
 
 if(scanLock) return;
+
 scanLock=true;
 
 let lines = decoded.split("\n");
-let familyId = lines[0].trim();
+let familyId = lines[0].replace("\r","").trim();
 
-collapseCamera();
+/* collapse camera box */
+document.getElementById("reader").style.display="none";
+
 loadFamily(familyId);
 
 }
@@ -328,7 +331,9 @@ boxes.forEach(b=>{
 
 if(b.checked){
 arrived++;
-names.push(b.parentElement.innerText.trim());
+names.push(
+b.closest(".member").querySelector("span").innerText.trim()
+);
 }
 
 });
@@ -414,11 +419,33 @@ function resetScanner(){
 
 document.getElementById("familyCard").innerHTML="";
 
+/* show scanner controls again */
+document.getElementById("reader").style.display="block";
+
+/* clear scanner area */
 document.getElementById("reader").innerHTML="";
 
 scanLock=false;
 
-startScanner();
+/* recreate scanner UI but DO NOT auto-start camera */
+const scanner = new Html5QrcodeScanner(
+"reader",
+{
+fps:15,
+qrbox:{width:250,height:250},
+rememberLastUsedCamera:true,
+supportedScanTypes:[
+Html5QrcodeScanType.SCAN_TYPE_CAMERA,
+Html5QrcodeScanType.SCAN_TYPE_FILE
+],
+formatsToSupport:[
+Html5QrcodeSupportedFormats.QR_CODE
+]
+},
+false
+);
+
+scanner.render(onScan);
 
 }
   
