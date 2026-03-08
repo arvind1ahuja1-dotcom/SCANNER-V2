@@ -87,6 +87,9 @@ OKAY
 
 <div id="reader" style="width:320px;margin:auto"></div>
 
+<!-- ADD THIS LINE -->
+<input type="file" accept="image/*" onchange="scanFile(this.files[0])">
+
 <div id="familyCard"></div>
 
 </div>
@@ -301,6 +304,27 @@ return;
 
 document.body.className="green";
 document.body.innerHTML="<h1>WELCOME</h1>";
+
+}
+
+
+function scanFile(file){
+
+const html5QrCode = new Html5Qrcode("reader");
+
+html5QrCode.scanFile(file, true)
+.then(decodedText => {
+
+console.log("QR decoded from image:", decodedText);
+
+onScan(decodedText);
+
+})
+.catch(err => {
+
+alert("QR not detected in image");
+
+});
 
 }
 
