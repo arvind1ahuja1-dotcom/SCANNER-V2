@@ -181,12 +181,38 @@ startScanner();
 
 function startScanner(){
 
-const scanner=new Html5QrcodeScanner(
-"reader",
-{fps:10,qrbox:250}
+const html5QrCode = new Html5Qrcode("reader");
+
+const config = {
+fps: 10,
+qrbox: { width: 250, height: 250 },
+formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
+};
+
+Html5Qrcode.getCameras().then(devices => {
+
+if(devices && devices.length){
+
+let cameraId = devices[0].id;
+
+html5QrCode.start(
+cameraId,
+config,
+(decodedText) => {
+
+console.log("QR decoded:", decodedText);
+onScan(decodedText);
+
+},
+(errorMessage) => {
+}
 );
 
-scanner.render(onScan);
+}
+
+}).catch(err => {
+console.log(err);
+});
 
 }
 
