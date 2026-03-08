@@ -188,7 +188,8 @@ document.getElementById("msg").innerText="Connection error: "+err;
 
 }
 
-
+setTimeout(startScanner,300);
+  
 async function loadFunction(){
 
 let res=await fetch(API_URL+"?action=active");
