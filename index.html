@@ -248,6 +248,7 @@ let lines = decoded.split("\n");
 let familyId = lines[0].replace("\r","").trim();
 
 document.querySelector("#reader video")?.remove();
+collapseCamera();
 loadFamily(familyId);
 
 }
@@ -365,19 +366,41 @@ return;
 
 }
 
-if(arrived==boxes.length){
-document.body.className="green";
-}else{
-document.body.style.background="#ed6c02";
-document.body.style.color="white";
-}
-document.body.innerHTML=`
-<h1 style="font-size:42px">
+let color = (arrived==boxes.length) ? "#2e7d32" : "#ed6c02";
+
+document.getElementById("familyCard").innerHTML = `
+
+<div style="
+background:${color};
+color:white;
+padding:40px;
+border-radius:12px;
+margin-top:20px;
+text-align:center;
+">
+
+<h1 style="font-size:42px;margin-bottom:20px">
 WELCOME
 </h1>
 
-<div style="font-size:26px;margin-top:20px">
+<div style="font-size:26px;margin-bottom:30px">
 ${names[0]} ${fname} Family
+</div>
+
+<button
+style="
+font-size:22px;
+padding:14px 28px;
+background:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+"
+onclick="resetScanner()"
+>
+SCAN NEXT GUEST
+</button>
+
 </div>
 `;
 
@@ -393,6 +416,18 @@ video.remove();
 
 }
 
+function resetScanner(){
+
+document.getElementById("familyCard").innerHTML="";
+
+document.getElementById("reader").innerHTML="";
+
+scanLock=false;
+
+startScanner();
+
+}
+  
 </script>
 
 </body>
