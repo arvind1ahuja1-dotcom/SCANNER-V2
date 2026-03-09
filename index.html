@@ -38,10 +38,18 @@ font-size:24px;
 padding:8px 10px;
 }
 
+#reader{
+display:flex;
+justify-content:center;
+align-items:center;
+margin:auto;
+}
+
 #reader video{
 width:250px !important;
 height:250px !important;
 object-fit:cover;
+border-radius:10px;
 }
   
 .green{
@@ -101,6 +109,8 @@ OKAY
 
 
 <script>
+
+let scanner=null;
 
 const API_URL="https://script.google.com/macros/s/AKfycbwfBi1pESnwh8ZMSDPLATpjZHEMV3npR6146FfdMOSrbXvTlJ7f7g4ZmG1dojHulhY/exec";
 
@@ -210,10 +220,14 @@ activeFunction=data.id;
 
 document.getElementById("functionTitle").innerText=data.name;
 
-resetScanner();
+showScannerControls();
 
 }
 
+function showScannerControls(){
+document.getElementById("reader").innerHTML="";
+}
+  
 function startScanner(){
 
 scanLock=false;
@@ -395,7 +409,7 @@ WELCOME
 </h1>
 
 <div style="font-size:26px;margin-bottom:30px">
-${names[0]} ${fname} Family
+${document.querySelector(".member span").innerText} ${fname} Family
 </div>
 
 <button
@@ -419,10 +433,11 @@ SCAN NEXT GUEST
 
 function collapseCamera(){
 
-const reader = document.getElementById("reader");
+let video=document.querySelector("#reader video");
 
-/* hide camera only */
-reader.style.display="none";
+if(video){
+video.remove();
+}
 
 }
 
@@ -430,18 +445,16 @@ function resetScanner(){
 
 document.getElementById("familyCard").innerHTML="";
 
-const reader = document.getElementById("reader");
+const reader=document.getElementById("reader");
 
-/* show scanner area again */
 reader.style.display="block";
-
-/* clear scanner UI */
 reader.innerHTML="";
 
 scanLock=false;
 
-/* recreate scanner UI */
-const scanner = new Html5QrcodeScanner(
+if(!scanner){
+
+scanner=new Html5QrcodeScanner(
 "reader",
 {
 fps:20,
@@ -459,6 +472,8 @@ false
 );
 
 scanner.render(onScan);
+
+}
 
 }
   
