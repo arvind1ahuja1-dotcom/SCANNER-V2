@@ -432,7 +432,8 @@ document.getElementById("familyCard").innerHTML="";
 document.getElementById("reader").style.display="block";
 
 /* clear scanner area */
-document.getElementById("reader").innerHTML="";
+const reader=document.getElementById("reader");
+reader.innerHTML="";
 
 scanLock=false;
 
