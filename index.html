@@ -208,34 +208,9 @@ resetScanner();
 
 }
 
-function startScanner(){
-
-scanLock=false;
-  
-const scanner = new Html5QrcodeScanner(
-"reader",
-{
-fps: 30,
-qrbox: {width:320,height:320},
-rememberLastUsedCamera:true,
-supportedScanTypes:[
-Html5QrcodeScanType.SCAN_TYPE_CAMERA,
-Html5QrcodeScanType.SCAN_TYPE_FILE
-],
-formatsToSupport:[
-Html5QrcodeSupportedFormats.QR_CODE
-]
-},
-false
-);
-
-scanner.render(onScan);
-
-}
-
 let scanLock=false;
 
-function onScan(decoded){
+async function onScan(decoded){
 
 if(scanLock) return;
 
@@ -243,6 +218,23 @@ scanLock = true;
 
 let lines = decoded.split("\n");
 let familyId = lines[0].replace("\r","").trim();
+
+/* check attendance BEFORE loading family */
+
+let res = await fetch(API_URL+
+"?action=check&family="+familyId+"&func="+activeFunction);
+
+let data = await res.json();
+
+if(data.alreadyChecked){
+
+showDuplicateMessage(data.namesPresent);
+
+scanLock=false;
+
+return;
+
+}
 
 /* collapse camera box */
 collapseCamera();
@@ -456,6 +448,35 @@ false
 );
 
 scanner.render(onScan);
+
+}
+
+function showDuplicateMessage(names){
+
+const reader = document.getElementById("reader");
+
+let msg = document.createElement("div");
+
+msg.style.background="#c62828";
+msg.style.color="white";
+msg.style.padding="16px";
+msg.style.marginTop="10px";
+msg.style.fontSize="22px";
+msg.style.fontWeight="bold";
+msg.style.borderRadius="8px";
+
+msg.innerHTML = `
+QR ALREADY SCANNED<br>
+Guests: ${names}
+`;
+
+reader.appendChild(msg);
+
+/* remove message after 5 seconds */
+
+setTimeout(()=>{
+msg.remove();
+},5000);
 
 }
   
