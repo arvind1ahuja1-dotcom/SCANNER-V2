@@ -347,7 +347,7 @@ let payload={
 action:"submit",
 func:activeFunction,
 family:fid,
-primary:names[0],
+primary:document.querySelector(".member span").innerText,
 familyName:fname,
 registered:boxes.length,
 arrived:arrived,
@@ -389,7 +389,7 @@ WELCOME
 </h1>
 
 <div style="font-size:26px;margin-bottom:30px">
-${names[0]} ${fname} Family
+${document.querySelector(".member span").innerText} ${fname} Family
 </div>
 
 <button
