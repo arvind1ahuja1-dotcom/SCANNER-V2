@@ -478,9 +478,10 @@ scannerInstance.render(onScan);
 
 function showDuplicateMessage(names){
 
+scanLock = true;
+
 const container = document.getElementById("familyCard");
 
-/* remove existing warning if present */
 let old = document.getElementById("dupWarning");
 if(old) old.remove();
 
@@ -500,18 +501,19 @@ Guests: ${names}
 
 container.appendChild(msg);
 
-/* remove message after 5 seconds */
 setTimeout(()=>{
 msg.remove();
+scanLock=false;
 },5000);
 
 }
 
 function showInvalidQR(){
 
+scanLock = true;
+
 const container = document.getElementById("familyCard");
 
-/* remove existing warning */
 let old = document.getElementById("dupWarning");
 if(old) old.remove();
 
@@ -530,6 +532,7 @@ container.appendChild(msg);
 
 setTimeout(()=>{
 msg.remove();
+scanLock=false;
 },3000);
 
 }
