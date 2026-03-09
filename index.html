@@ -225,7 +225,34 @@ showScannerControls();
 }
 
 function showScannerControls(){
-document.getElementById("reader").innerHTML="";
+
+const reader=document.getElementById("reader");
+
+reader.innerHTML="";
+
+if(!scanner){
+
+scanner=new Html5QrcodeScanner(
+"reader",
+{
+fps:20,
+qrbox:{width:250,height:250},
+rememberLastUsedCamera:true,
+supportedScanTypes:[
+Html5QrcodeScanType.SCAN_TYPE_CAMERA,
+Html5QrcodeScanType.SCAN_TYPE_FILE
+],
+formatsToSupport:[
+Html5QrcodeSupportedFormats.QR_CODE
+]
+},
+false
+);
+
+scanner.render(onScan);
+
+}
+
 }
   
 function startScanner(){
