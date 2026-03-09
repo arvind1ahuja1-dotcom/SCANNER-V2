@@ -96,6 +96,8 @@ OKAY
 
 <script>
 
+let scannerInstance=null;
+
 let scannedFamilies = {};
 
 const API_URL="https://script.google.com/macros/s/AKfycbwfBi1pESnwh8ZMSDPLATpjZHEMV3npR6146FfdMOSrbXvTlJ7f7g4ZmG1dojHulhY/exec";
@@ -249,7 +251,7 @@ return;
 /* collapse camera box */
 collapseCamera();
 
-loadFamily(familyId);
+await loadFamily(familyId);
 
 }
 
@@ -349,7 +351,7 @@ let payload={
 action:"submit",
 func:activeFunction,
 family:fid,
-primary:document.querySelector(".member span").innerText,
+primary:document.querySelector(".member span")?.innerText || "",
 familyName:fname,
 registered:boxes.length,
 arrived:arrived,
@@ -447,7 +449,7 @@ reader.innerHTML="";
 scanLock=false;
 
 /* recreate scanner UI but DO NOT auto-start camera */
-const scanner = new Html5QrcodeScanner(
+scannerInstance = new Html5QrcodeScanner(
 "reader",
 {
 fps:30,
@@ -464,7 +466,7 @@ Html5QrcodeSupportedFormats.QR_CODE
 false
 );
 
-scanner.render(onScan);
+scannerInstance.render(onScan);
 
 }
 
