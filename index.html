@@ -87,7 +87,7 @@ OKAY
 
 <h3 id="functionTitle"></h3>
 
-<div id="reader" style="width:320px;margin:auto;"></div>
+<div id="reader" style="width:320px;height:320px;margin:auto;"></div>
 
 <div id="familyCard"></div>
 
@@ -470,13 +470,11 @@ if(old) old.remove();
 let msg = document.createElement("div");
 msg.id="dupWarning";
 
-msg.style.background="#c62828";
-msg.style.color="white";
-msg.style.padding="16px";
-msg.style.marginTop="10px";
-msg.style.fontSize="22px";
+msg.style.color="#c62828";
+msg.style.fontSize="16px";
 msg.style.fontWeight="bold";
-msg.style.borderRadius="8px";
+msg.style.marginTop="8px";
+msg.style.textAlign="center";
 
 msg.innerHTML = `
 QR ALREADY SCANNED FOR ${document.getElementById("functionTitle").innerText}<br>
