@@ -262,8 +262,8 @@ let data=await res.json();
 let html=`
 <div class="familyCard">
 
-<h3 style="margin-bottom:10px">
-${data.familyName} Family
+<h3 style="margin-bottom:25px">
+${data.members[0].name} ${data.familyName} Family
 </h3>
 
 <div style="margin-bottom:18px;font-size:18px;color:#444">
