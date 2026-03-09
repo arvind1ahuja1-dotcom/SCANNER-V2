@@ -30,29 +30,12 @@ margin:10px;
 .member{
 display:flex;
 justify-content:space-between;
-align-items:center;
-width:92%;
-max-width:500px;
-margin:10px auto;
-font-size:24px;
-padding:8px 10px;
-}
-
-#reader{
 width:320px;
-margin:20px auto;
-text-align:center;
+margin:auto;
+font-size:22px;
+padding:6px;
 }
 
-#reader video{
-width:250px !important;
-height:250px !important;
-object-fit:cover;
-border-radius:10px;
-display:block;
-margin:auto;
-}
-  
 .green{
 background:#2e7d32;
 color:white;
@@ -102,7 +85,7 @@ OKAY
 
 <h3 id="functionTitle"></h3>
 
-<div id="reader" style="width:320px;margin:auto;"></div>
+<div id="reader" style="width:320px;margin:auto"></div>
 
 <div id="familyCard"></div>
 
@@ -111,40 +94,11 @@ OKAY
 
 <script>
 
-let cachedFunction=null;
-  
-let scanner=null;
-
 const API_URL="https://script.google.com/macros/s/AKfycbwfBi1pESnwh8ZMSDPLATpjZHEMV3npR6146FfdMOSrbXvTlJ7f7g4ZmG1dojHulhY/exec";
-
-const SESSION_HOURS = 6;
 
 let userName="";
 let activeFunction="";
 
-window.onload = function(){
-
-let user = localStorage.getItem("scannerUser");
-let time = localStorage.getItem("loginTime");
-
-if(user && time){
-
-let diff = (Date.now() - time) / 3600000;
-
-if(diff < SESSION_HOURS){
-
-userName = user;
-
-document.getElementById("login").style.display="none";
-document.getElementById("scanner").style.display="block";
-
-loadFunction();
-
-}
-
-}
-
-}
 
 function validateLogin(){
 
@@ -169,116 +123,91 @@ btn.style.background="#9ccc65";
 
 async function login(){
 
-document.getElementById("msg").innerText="Connecting...";
-
 let mobile=document.getElementById("mobile").value;
 let pin=document.getElementById("pin").value;
 
+document.getElementById("msg").innerText="Checking login...";
+
 try{
 
-let res=await fetch(API_URL+"?action=login&mobile="+mobile+"&pin="+pin);
+let url = API_URL + "?action=login&mobile=" + mobile + "&pin=" + pin;
 
-let data=await res.json();
+console.log(url);
+
+let res = await fetch(url);
+
+let text = await res.text();
+
+console.log(text);
+
+document.getElementById("msg").innerText=text;
+
+let data = JSON.parse(text);
 
 if(!data.success){
 
-document.getElementById("msg").innerText="Incorrect Mobile or PIN";
+alert("Mobile or PIN not authorised");
+
 return;
 
 }
 
 userName=data.name;
 
-/* SAVE SESSION */
-localStorage.setItem("scannerUser", userName);
-localStorage.setItem("loginTime", Date.now());
-
 document.getElementById("login").style.display="none";
 document.getElementById("scanner").style.display="block";
 
 loadFunction();
 
-}catch(err){
+}
+catch(e){
 
-document.getElementById("msg").innerText="Connection error: "+err;
+document.getElementById("msg").innerText="Login error: "+e;
 
 }
 
 }
-  
+
+
 async function loadFunction(){
-
-if(cachedFunction){
-activeFunction=cachedFunction.id;
-document.getElementById("functionTitle").innerText=cachedFunction.name;
-showScannerControls();
-return;
-}
 
 let res=await fetch(API_URL+"?action=active");
 
 let data=await res.json();
 
 if(!data.active){
+
 alert("No active function");
 return;
-}
 
-cachedFunction=data;
+}
 
 activeFunction=data.id;
 
 document.getElementById("functionTitle").innerText=data.name;
 
-showScannerControls();
+startScanner();
 
 }
 
-function showScannerControls(){
 
-const reader=document.getElementById("reader");
+function startScanner(){
 
-reader.innerHTML="";
-
-if(!scanner){
-
-scanner=new Html5QrcodeScanner(
+const scanner=new Html5QrcodeScanner(
 "reader",
-{
-fps:20,
-qrbox:{width:250,height:250},
-rememberLastUsedCamera:true,
-supportedScanTypes:[
-Html5QrcodeScanType.SCAN_TYPE_CAMERA
-],
-formatsToSupport:[
-Html5QrcodeSupportedFormats.QR_CODE
-]
-},
-false
+{fps:10,qrbox:250}
 );
 
 scanner.render(onScan);
 
 }
 
-}
-  
-
-
-let scanLock=false;
 
 function onScan(decoded){
 
-if(scanLock) return;
+let lines=decoded.split("\n");
 
-scanLock = true;
-
-let lines = decoded.split("\n");
-let familyId = lines[0].replace("\r","").trim();
-
-/* collapse camera box */
-collapseCamera();
+let familyId=lines[0].trim();
 
 loadFamily(familyId);
 
@@ -292,61 +221,20 @@ let res=await fetch(API_URL+
 
 let data=await res.json();
 
-let html=`
-<div class="familyCard">
-
-<h3 style="margin-bottom:25px">
-${data.members[0].name} ${data.familyName} Family
-</h3>
-
-<div style="margin-bottom:25px;font-size:18px;color:#444">
-Click name or tick box to untick absent guest
-</div>
-`;
+let html="<h3>"+data.familyName+" Family</h3>";
 
 data.members.forEach((m,i)=>{
 
 html+=`
-<label class="member">
+<div class="member">
 <span>${m.name}</span>
 <input type="checkbox" checked id="m${i}">
-</label>
+</div>
 `;
 
 });
 
-html+=`
-<div style="display:flex;justify-content:space-between;margin-top:25px">
-
-<button
-style="
-background:#ed6c02;
-color:white;
-padding:14px 20px;
-border:none;
-font-size:20px;
-border-radius:8px
-"
->
-+ Guests
-</button>
-
-<button
-onclick="submit('${data.family}','${data.familyName}')"
-style="
-background:#2e7d32;
-color:white;
-padding:14px 20px;
-border:none;
-font-size:20px;
-border-radius:8px
-"
->
-SUBMIT
-</button>
-
-</div>
-`;
+html+=`<button onclick="submit('${data.family}','${data.familyName}')">Submit</button>`;
 
 document.getElementById("familyCard").innerHTML=html;
 
@@ -364,23 +252,16 @@ boxes.forEach(b=>{
 
 if(b.checked){
 arrived++;
-names.push(
-b.closest(".member").querySelector("span").innerText.trim()
-);
+names.push(b.parentElement.innerText.trim());
 }
 
 });
 
-if(names.length === 0){
-alert("At least one guest must be present.");
-return;
-}
-  
 let payload={
 action:"submit",
 func:activeFunction,
 family:fid,
-primary:document.querySelector(".member span").innerText,
+primary:names[0],
 familyName:fname,
 registered:boxes.length,
 arrived:arrived,
@@ -404,87 +285,11 @@ return;
 
 }
 
-let color = (arrived==boxes.length) ? "#2e7d32" : "#ed6c02";
-
-document.getElementById("familyCard").innerHTML = `
-
-<div style="
-background:${color};
-color:white;
-padding:40px;
-border-radius:12px;
-margin-top:20px;
-text-align:center;
-">
-
-<h1 style="font-size:42px;margin-bottom:20px">
-WELCOME
-</h1>
-
-<div style="font-size:26px;margin-bottom:30px">
-${document.querySelector(".member span").innerText} ${fname} Family
-</div>
-
-<button
-style="
-font-size:22px;
-padding:14px 28px;
-background:white;
-border:none;
-border-radius:8px;
-cursor:pointer;
-"
-onclick="resetScanner()"
->
-SCAN NEXT GUEST
-</button>
-
-</div>
-`;
+document.body.className="green";
+document.body.innerHTML="<h1>WELCOME</h1>";
 
 }
 
-function collapseCamera(){
-
-let video=document.querySelector("#reader video");
-
-if(video){
-video.remove();
-}
-
-}
-
-function resetScanner(){
-
-document.getElementById("familyCard").innerHTML="";
-
-const reader=document.getElementById("reader");
-
-reader.style.display="block";
-reader.innerHTML="";
-
-scanLock=false;
-
-scanner=new Html5QrcodeScanner(
-"reader",
-{
-fps:20,
-qrbox:{width:250,height:250},
-rememberLastUsedCamera:true,
-supportedScanTypes:[
-Html5QrcodeScanType.SCAN_TYPE_CAMERA
-],
-formatsToSupport:[
-Html5QrcodeSupportedFormats.QR_CODE
-]
-},
-false
-);
-
-scanner.render(onScan);
-
-}
-  
 </script>
 
 </body>
