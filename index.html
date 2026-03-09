@@ -209,6 +209,7 @@ resetScanner();
 }
 
 let scanLock=false;
+  
 
 async function onScan(decoded){
 
@@ -221,7 +222,7 @@ let lines = decoded.split("\n");
 let familyId = lines[0].replace("\r","").trim();
 
 if(!familyId.startsWith("FAM")){
-showDuplicateMessage("Invalid QR Code");
+showInvalidQR();
 scanLock=false;
 return;
 }
@@ -488,6 +489,33 @@ reader.appendChild(msg);
 setTimeout(()=>{
 msg.remove();
 },5000);
+
+}
+
+  function showInvalidQR(){
+
+const reader = document.getElementById("reader");
+
+/* remove existing warning */
+let old = document.getElementById("dupWarning");
+if(old) old.remove();
+
+let msg = document.createElement("div");
+msg.id="dupWarning";
+
+msg.style.color="#c62828";
+msg.style.fontSize="16px";
+msg.style.fontWeight="bold";
+msg.style.marginTop="8px";
+msg.style.textAlign="center";
+
+msg.innerHTML = `INVALID QR CODE`;
+
+reader.appendChild(msg);
+
+setTimeout(()=>{
+msg.remove();
+},3000);
 
 }
   
