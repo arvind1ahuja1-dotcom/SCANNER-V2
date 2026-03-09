@@ -230,7 +230,8 @@ return;
 /* check attendance BEFORE loading family */
 
 let res = await fetch(API_URL+
-"?action=check&family="+familyId+"&func="+activeFunction);
+"?action=check&family="+familyId+"&func="+activeFunction,
+{cache:"no-store"});
 
 let data = await res.json();
 
@@ -420,8 +421,11 @@ function collapseCamera(){
 
 const reader = document.getElementById("reader");
 
-/* remove the entire scanner UI */
-reader.innerHTML = "";
+/* hide scanner completely */
+reader.style.display="none";
+
+/* remove scanner UI */
+reader.innerHTML="";
 
 }
 
