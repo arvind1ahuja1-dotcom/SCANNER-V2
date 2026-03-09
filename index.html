@@ -38,6 +38,12 @@ font-size:24px;
 padding:8px 10px;
 }
 
+#reader video{
+width:250px !important;
+height:250px !important;
+object-fit:cover;
+}
+  
 .green{
 background:#2e7d32;
 color:white;
@@ -262,12 +268,12 @@ let data=await res.json();
 let html=`
 <div class="familyCard">
 
-<h3 style="margin-bottom:10px">
-${data.familyName} Family
+<h3 style="margin-bottom:25px">
+${data.members[0].name} ${data.familyName} Family
 </h3>
 
-<div style="margin-bottom:18px;font-size:18px;color:#444">
-Click on names or tick boxes to untick absent guests
+<div style="margin-bottom:25px;font-size:18px;color:#444">
+Click name or tick box to untick absent guest
 </div>
 `;
 
@@ -347,7 +353,7 @@ let payload={
 action:"submit",
 func:activeFunction,
 family:fid,
-primary:names[0],
+primary:document.querySelector(".member span").innerText,
 familyName:fname,
 registered:boxes.length,
 arrived:arrived,
@@ -415,8 +421,8 @@ function collapseCamera(){
 
 const reader = document.getElementById("reader");
 
-/* remove the entire scanner UI */
-reader.innerHTML = "";
+/* hide camera only */
+reader.style.display="none";
 
 }
 
@@ -424,15 +430,17 @@ function resetScanner(){
 
 document.getElementById("familyCard").innerHTML="";
 
-/* show scanner controls again */
-document.getElementById("reader").style.display="block";
+const reader = document.getElementById("reader");
 
-/* clear scanner area */
-document.getElementById("reader").innerHTML="";
+/* show scanner area again */
+reader.style.display="block";
+
+/* clear scanner UI */
+reader.innerHTML="";
 
 scanLock=false;
 
-/* recreate scanner UI but DO NOT auto-start camera */
+/* recreate scanner UI */
 const scanner = new Html5QrcodeScanner(
 "reader",
 {
@@ -451,8 +459,6 @@ false
 );
 
 scanner.render(onScan);
-
-resetScanner
 
 }
   
