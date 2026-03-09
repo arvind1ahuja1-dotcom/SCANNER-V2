@@ -472,7 +472,7 @@ scannerInstance.render(onScan);
 
 function showDuplicateMessage(names){
 
-const reader = document.getElementById("reader");
+const container = document.getElementById("familyCard");
 
 /* remove existing warning if present */
 let old = document.getElementById("dupWarning");
@@ -492,19 +492,18 @@ QR ALREADY SCANNED FOR ${document.getElementById("functionTitle").innerText}<br>
 Guests: ${names}
 `;
 
-document.getElementById("familyCard").appendChild(msg);
+container.appendChild(msg);
 
 /* remove message after 5 seconds */
-
 setTimeout(()=>{
 msg.remove();
 },5000);
 
 }
 
-  function showInvalidQR(){
+function showInvalidQR(){
 
-const reader = document.getElementById("reader");
+const container = document.getElementById("familyCard");
 
 /* remove existing warning */
 let old = document.getElementById("dupWarning");
@@ -521,7 +520,7 @@ msg.style.textAlign="center";
 
 msg.innerHTML = `INVALID QR CODE`;
 
-document.getElementById("familyCard").appendChild(msg);
+container.appendChild(msg);
 
 setTimeout(()=>{
 msg.remove();
