@@ -255,7 +255,7 @@ let html=`
 <div class="familyCard">
 
 <h3 style="margin-bottom:25px">
-${data.members[0].name} ${data.familyName} Family
+${data.members.length ? data.members[0].name : ""} ${data.familyName} Family
 </h3>
 
 <div style="margin-bottom:18px;font-size:18px;color:#444">
@@ -471,7 +471,7 @@ msg.style.fontWeight="bold";
 msg.style.borderRadius="8px";
 
 msg.innerHTML = `
-QR ALREADY SCANNED<br>
+QR ALREADY SCANNED FOR ${document.getElementById("functionTitle").innerText}<br>
 Guests: ${names}
 `;
 
