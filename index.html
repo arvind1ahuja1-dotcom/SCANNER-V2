@@ -239,34 +239,62 @@ function showScannerControls(){
 
 const reader=document.getElementById("reader");
 
-reader.innerHTML="";
+reader.innerHTML=`
 
-if(scanner==null){
+<div id="cameraBox"></div>
 
-scanner=new Html5QrcodeScanner(
-"reader",
+<button onclick="startScanner()">
+Start Scanning
+</button>
+
+<br>
+
+<input type="file"
+accept="image/*"
+capture="environment"
+onchange="scanFile(this)"
+style="margin-top:10px">
+
+<div style="font-size:16px;margin-top:6px">
+Scan an Image File
+</div>
+
+`;
+
+}
+
+function startScanner(){
+
+scanner = new Html5Qrcode("cameraBox");
+
+scanner.start(
+{ facingMode:"environment" },
 {
 fps:20,
-qrbox:{width:250,height:250},
-rememberLastUsedCamera:true,
-supportedScanTypes:[
-Html5QrcodeScanType.SCAN_TYPE_CAMERA,
-Html5QrcodeScanType.SCAN_TYPE_FILE
-],
-formatsToSupport:[
-Html5QrcodeSupportedFormats.QR_CODE
-]
+qrbox:{width:250,height:250}
 },
-false
+onScan
 );
 
-scanner.render(onScan);
-
 }
 
+function scanFile(input){
+
+if(!input.files.length) return;
+
+const file=input.files[0];
+
+scanner = new Html5Qrcode("cameraBox");
+
+scanner.scanFile(file,true)
+.then(decoded=>{
+onScan(decoded);
+})
+.catch(err=>{
+alert("QR not detected in image");
+});
+
 }
-
-
 
 let scanLock=false;
 
