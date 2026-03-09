@@ -492,7 +492,7 @@ QR ALREADY SCANNED FOR ${document.getElementById("functionTitle").innerText}<br>
 Guests: ${names}
 `;
 
-reader.appendChild(msg);
+document.getElementById("familyCard").appendChild(msg);
 
 /* remove message after 5 seconds */
 
@@ -521,7 +521,7 @@ msg.style.textAlign="center";
 
 msg.innerHTML = `INVALID QR CODE`;
 
-reader.appendChild(msg);
+document.getElementById("familyCard").appendChild(msg);
 
 setTimeout(()=>{
 msg.remove();
