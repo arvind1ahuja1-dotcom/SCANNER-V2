@@ -364,7 +364,16 @@ body:JSON.stringify(payload)
 
 let data=await res.json();
 
-if(data.duplicate){
+if(if(data.duplicate){
+
+alert("Family already checked in");
+
+/* return to scanner */
+resetScanner();
+
+return;
+
+}){
 
 alert("Family already checked in");
 return;
@@ -451,8 +460,6 @@ false
 );
 
 scanner.render(onScan);
-
-resetScanner
 
 }
   
