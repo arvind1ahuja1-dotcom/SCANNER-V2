@@ -96,6 +96,8 @@ OKAY
 
 <script>
 
+let scannedFamilies = {};
+
 const API_URL="https://script.google.com/macros/s/AKfycbwfBi1pESnwh8ZMSDPLATpjZHEMV3npR6146FfdMOSrbXvTlJ7f7g4ZmG1dojHulhY/exec";
 
 const SESSION_HOURS = 6;
@@ -204,6 +206,9 @@ activeFunction=data.id;
 
 document.getElementById("functionTitle").innerText=data.name;
 
+/* preload attendance log */
+await preloadAttendance();
+
 resetScanner();
 
 }
@@ -229,15 +234,11 @@ return;
 
 /* check attendance BEFORE loading family */
 
-let res = await fetch(API_URL+
-"?action=check&family="+familyId+"&func="+activeFunction,
-{cache:"no-store"});
+/* check duplicates locally */
 
-let data = await res.json();
+if(scannedFamilies[familyId]){
 
-if(data.alreadyChecked){
-
-showDuplicateMessage(data.namesPresent);
+showDuplicateMessage(scannedFamilies[familyId]);
 
 scanLock=false;
 
@@ -377,6 +378,9 @@ return;
 
 }
 
+/* update local attendance cache */
+scannedFamilies[fid]=names.join(", ");
+  
 let color = (arrived==boxes.length) ? "#2e7d32" : "#ed6c02";
 
 document.getElementById("familyCard").innerHTML = `
@@ -522,6 +526,27 @@ msg.remove();
 },3000);
 
 }
+
+async function preloadAttendance(){
+
+try{
+
+let res = await fetch(API_URL+"?action=attendance&func="+activeFunction,{cache:"no-store"});
+let data = await res.json();
+
+/* store scanned families in memory */
+scannedFamilies = {};
+
+data.forEach(r=>{
+scannedFamilies[r.family]=r.names;
+});
+
+}catch(err){
+console.log("Attendance preload failed",err);
+}
+
+}
+
   
 </script>
 
