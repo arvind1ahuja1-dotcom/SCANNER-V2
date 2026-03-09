@@ -455,7 +455,12 @@ function showDuplicateMessage(names){
 
 const reader = document.getElementById("reader");
 
+/* remove existing warning if present */
+let old = document.getElementById("dupWarning");
+if(old) old.remove();
+
 let msg = document.createElement("div");
+msg.id="dupWarning";
 
 msg.style.background="#c62828";
 msg.style.color="white";
