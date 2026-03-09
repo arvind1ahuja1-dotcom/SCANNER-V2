@@ -217,7 +217,14 @@ if(scanLock) return;
 scanLock = true;
 
 let lines = decoded.split("\n");
+  
 let familyId = lines[0].replace("\r","").trim();
+
+if(!familyId.startsWith("FAM")){
+showDuplicateMessage("Invalid QR Code");
+scanLock=false;
+return;
+}
 
 /* check attendance BEFORE loading family */
 
