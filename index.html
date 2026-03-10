@@ -8,6 +8,14 @@
 
 <style>
 
+#scanner{
+position:relative;
+}
+
+#reader{
+min-height:0;
+}
+  
 #reader video,
 #reader img{
 max-height:320px !important;
@@ -93,7 +101,7 @@ OKAY
 
 <h3 id="functionTitle"></h3>
 
-<div id="reader" style="width:320px;height:320px;margin:auto;"></div>
+<div id="reader" style="width:320px;margin:auto;"></div>
 
 <div id="familyCard"></div>
 
@@ -460,7 +468,7 @@ try{ scannerInstance.clear(); }catch(e){}
 
 const reader = document.getElementById("reader");
 reader.innerHTML="";
-
+reader.style.height="0px";
 }
 
 function resetScanner(){
@@ -476,6 +484,8 @@ try{ scannerInstance.clear(); }catch(e){}
 scanLock = false;
 lastScanned = "";
 
+document.getElementById("reader").style.height="320px";
+  
 document.getElementById("familyCard").innerHTML="";
 
 /* show scanner controls again */
@@ -525,7 +535,7 @@ msg.style.fontWeight="bold";
 msg.style.marginTop="8px";
 msg.style.textAlign="center";
 msg.style.position="absolute";
-msg.style.top="360px";
+msg.style.top="75vh";
 msg.style.left="0";
 msg.style.right="0";
 msg.style.zIndex="999";
@@ -562,7 +572,7 @@ msg.style.fontWeight="bold";
 msg.style.marginTop="8px";
 msg.style.textAlign="center";
 msg.style.position="absolute";
-msg.style.top="360px";
+msg.style.top="75vh";
 msg.style.left="0";
 msg.style.right="0";
 msg.style.zIndex="999";
