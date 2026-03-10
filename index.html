@@ -14,12 +14,6 @@ max-height:320px !important;
 object-fit:contain;
 }
   
-#reader img,
-#reader video{
-max-height:320px !important;
-object-fit:contain;
-}
-  
 body{
 font-family:Arial;
 text-align:center;
@@ -282,10 +276,22 @@ await loadFamily(familyId);
 
 async function loadFamily(fid){
 
-let res=await fetch(API_URL+
-"?action=family&family="+fid+"&func="+activeFunction);
+let res;
+try{
+res=await fetch(API_URL+"?action=family&family="+fid+"&func="+activeFunction);
+}catch(err){
+alert("Network error. Please scan again.");
+resetScanner();
+return;
+}
 
 let data=await res.json();
+
+if(!data || !data.members){
+alert("Unable to load family data");
+resetScanner();
+return;
+}
 
 let html=`
 <div class="familyCard">
@@ -359,9 +365,15 @@ boxes.forEach(b=>{
 
 if(b.checked){
 arrived++;
-names.push(
-b.closest(".member").querySelector("span").innerText.trim()
-);
+
+let parent = b.closest(".member");
+if(parent){
+let span = parent.querySelector("span");
+if(span){
+names.push(span.innerText.trim());
+}
+}
+
 }
 
 });
@@ -464,6 +476,10 @@ reader.innerHTML="";
 
 function resetScanner(){
 
+if(scannerInstance){
+try{ scannerInstance.clear(); }catch(e){}
+}
+
 /* remove any alert */
 let warn = document.getElementById("dupWarning");
 if(warn) warn.remove();
@@ -480,8 +496,6 @@ document.getElementById("reader").style.display="block";
 /* clear scanner area */
 const reader=document.getElementById("reader");
 reader.innerHTML="";
-
-scanLock=false;
 
 /* recreate scanner UI but DO NOT auto-start camera */
 scannerInstance = new Html5QrcodeScanner(
