@@ -468,6 +468,10 @@ function resetScanner(){
 let warn = document.getElementById("dupWarning");
 if(warn) warn.remove();
 
+/* reset scan guards */
+scanLock = false;
+lastScanned = "";
+
 document.getElementById("familyCard").innerHTML="";
 
 /* show scanner controls again */
@@ -533,6 +537,7 @@ container.appendChild(msg);
 setTimeout(()=>{
 msg.remove();
 scanLock=false;
+lastScanned = "";
 },5000);
 
 }
