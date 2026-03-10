@@ -406,6 +406,9 @@ return;
 
 /* update local attendance cache */
 scannedFamilies[fid]=names.join(", ");
+
+/* prevent same QR from firing again */
+lastScanned = fid;
   
 let color = (arrived==boxes.length) ? "#2e7d32" : "#ed6c02";
 
@@ -461,6 +464,10 @@ reader.innerHTML="";
 
 function resetScanner(){
 
+/* remove any alert */
+let warn = document.getElementById("dupWarning");
+if(warn) warn.remove();
+
 document.getElementById("familyCard").innerHTML="";
 
 /* show scanner controls again */
@@ -498,7 +505,7 @@ function showDuplicateMessage(names){
 
 scanLock = true;
 
-const container = document.getElementById("familyCard");
+const container = document.getElementById("scanner");
 
 let old = document.getElementById("dupWarning");
 if(old) old.remove();
@@ -511,6 +518,11 @@ msg.style.fontSize="16px";
 msg.style.fontWeight="bold";
 msg.style.marginTop="8px";
 msg.style.textAlign="center";
+msg.style.position="absolute";
+msg.style.top="360px";
+msg.style.left="0";
+msg.style.right="0";
+msg.style.zIndex="999";
 
 msg.innerHTML =
 `QR ALREADY SCANNED FOR ${document.getElementById("functionTitle").innerText}<br>
@@ -529,7 +541,7 @@ function showInvalidQR(){
 
 scanLock = true;
 
-const container = document.getElementById("familyCard");
+const container = document.getElementById("scanner");
 
 let old = document.getElementById("dupWarning");
 if(old) old.remove();
@@ -542,6 +554,11 @@ msg.style.fontSize="16px";
 msg.style.fontWeight="bold";
 msg.style.marginTop="8px";
 msg.style.textAlign="center";
+msg.style.position="absolute";
+msg.style.top="360px";
+msg.style.left="0";
+msg.style.right="0";
+msg.style.zIndex="999";
 
 msg.innerHTML = `INVALID QR CODE`;
 
