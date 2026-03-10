@@ -8,11 +8,6 @@
 
 <style>
 
-#reader{
-height:320px;
-overflow:hidden;
-}
-
 #reader video,
 #reader img{
 max-height:320px !important;
@@ -517,17 +512,16 @@ msg.style.fontWeight="bold";
 msg.style.marginTop="8px";
 msg.style.textAlign="center";
 
-msg.innerHTML = `
-QR ALREADY SCANNED FOR ${document.getElementById("functionTitle").innerText}<br>
-Guests: ${names}
-`;
+msg.innerHTML =
+`QR ALREADY SCANNED FOR ${document.getElementById("functionTitle").innerText}<br>
+Guests: ${names}`;
 
 container.appendChild(msg);
 
 setTimeout(()=>{
 msg.remove();
 scanLock=false;
-},5000);
+},3000);
 
 }
 
