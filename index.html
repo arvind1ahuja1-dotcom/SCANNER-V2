@@ -244,8 +244,21 @@ if(scanLock) return;
 scanLock = true;
 
 let lines = decoded.split("\n");
-  
 let familyId = lines[0].replace("\r","").trim();
+
+/* ignore repeated scans of same QR */
+if(familyId === lastScanned){
+scanLock = false;
+return;
+}
+
+lastScanned = familyId;
+
+setTimeout(()=>{
+lastScanned = "";
+},2000);
+
+/* invalid QR check */
 
 if(!familyId.startsWith("FAM")){
 showInvalidQR();
@@ -253,9 +266,7 @@ scanLock=false;
 return;
 }
 
-/* check attendance BEFORE loading family */
-
-/* check duplicates locally */
+/* duplicate check */
 
 if(scannedFamilies[familyId]){
 
@@ -264,7 +275,6 @@ showDuplicateMessage(scannedFamilies[familyId]);
 scanLock=false;
 
 return;
-
 }
 
 /* collapse camera box */
