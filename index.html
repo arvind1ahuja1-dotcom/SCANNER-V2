@@ -304,63 +304,7 @@ resetScanner();
 return;
 }
 
-let html=`
-<div class="familyCard">
-
-<h3 style="margin-bottom:25px">
-${data.members.length ? data.members[0].name : ""} ${data.familyName} Family
-</h3>
-
-<div style="margin-bottom:18px;font-size:18px;font-weight:bold;color:#bf360c">
-Absent Guest? Tap Name to Remove Tick
-</div>
-`;
-
-data.members.forEach((m,i)=>{
-
-html+=`
-<label class="member">
-<span>${m.name}</span>
-<input type="checkbox" checked id="m${i}">
-</label>
-`;
-
-});
-
-html+=`
-<div style="display:flex;justify-content:space-between;margin-top:25px">
-
-<button
-style="
-background:#ed6c02;
-color:white;
-padding:14px 20px;
-border:none;
-font-size:20px;
-border-radius:8px
-"
->
-+ Guests
-</button>
-
-<button
-onclick="submit('${data.family}','${data.familyName}')"
-style="
-background:#2e7d32;
-color:white;
-padding:14px 20px;
-border:none;
-font-size:20px;
-border-radius:8px
-"
->
-SUBMIT
-</button>
-
-</div>
-`;
-
-document.getElementById("familyCard").innerHTML=html;
+renderFamily(data);
 
 }
 
@@ -373,8 +317,8 @@ let html=`
 ${data.members.length ? data.members[0].name : ""} ${data.familyName} Family
 </h3>
 
-<div style="margin-bottom:18px;font-size:16px;font-weight:bold;color:#4b0082">
-Tap Name of Absent guests to remove Tick
+<div style="margin-bottom:18px;font-size:18px;font-weight:bold;color:#bf360c">
+Absent Guest? Tap Name to Remove Tick
 </div>
 `;
 
