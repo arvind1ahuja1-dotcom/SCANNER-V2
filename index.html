@@ -270,7 +270,6 @@ return;
 collapseCamera();
 
 await loadFamily(familyId);
-scanLock = false;
 
 }
 
@@ -406,15 +405,9 @@ body:JSON.stringify(payload)
 let data=await res.json();
 
 if(data.duplicate){
-
-alert("Family already checked in");
-
-setTimeout(function(){
+showDuplicateMessage(names.join(", "));
 resetScanner();
-},100);
-
 return;
-
 }
 
 /* update local attendance cache */
