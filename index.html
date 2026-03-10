@@ -116,6 +116,8 @@ let scannerInstance=null;
 
 let scannedFamilies = {};
 
+let familyCache = {};
+
 const API_URL="https://script.google.com/macros/s/AKfycbwfBi1pESnwh8ZMSDPLATpjZHEMV3npR6146FfdMOSrbXvTlJ7f7g4ZmG1dojHulhY/exec";
 
 const SESSION_HOURS = 6;
@@ -228,6 +230,7 @@ resetScanner();
 
 /* preload attendance log */
 preloadAttendance();
+preloadFamilies();
 
 }
 
@@ -273,7 +276,11 @@ return;
 /* collapse camera box */
 collapseCamera();
 
+if(familyCache[familyId]){
+renderFamily(familyCache[familyId]);
+}else{
 await loadFamily(familyId);
+}
 
 }
 
@@ -357,7 +364,66 @@ document.getElementById("familyCard").innerHTML=html;
 
 }
 
+function renderFamily(data){
 
+let html=`
+<div class="familyCard">
+
+<h3 style="margin-bottom:25px">
+${data.members.length ? data.members[0].name : ""} ${data.familyName} Family
+</h3>
+
+<div style="margin-bottom:18px;font-size:16px;font-weight:bold;color:#4b0082">
+Tap Name of Absent guests to remove Tick
+</div>
+`;
+
+data.members.forEach((m,i)=>{
+
+html+=`
+<label class="member">
+<span>${m.name}</span>
+<input type="checkbox" checked id="m${i}">
+</label>
+`;
+
+});
+
+html+=`
+<div style="display:flex;justify-content:space-between;margin-top:25px">
+
+<button
+style="
+background:#ed6c02;
+color:white;
+padding:14px 20px;
+border:none;
+font-size:20px;
+border-radius:8px
+">
++ Guests
+</button>
+
+<button
+onclick="submit('${data.family}','${data.familyName}')"
+style="
+background:#2e7d32;
+color:white;
+padding:14px 20px;
+border:none;
+font-size:20px;
+border-radius:8px
+">
+SUBMIT
+</button>
+
+</div>
+`;
+
+document.getElementById("familyCard").innerHTML=html;
+
+}
+  
 async function submit(fid,fname){
 
 let boxes=document.querySelectorAll("input[type=checkbox]");
@@ -604,6 +670,25 @@ scannedFamilies[r.family]=r.names;
 
 }catch(err){
 console.log("Attendance preload failed",err);
+}
+
+}
+
+async function preloadFamilies(){
+
+try{
+
+let res = await fetch(API_URL+"?action=families&func="+activeFunction,{cache:"no-store"});
+let data = await res.json();
+
+familyCache = {};
+
+data.forEach(f=>{
+familyCache[f.family] = f;
+});
+
+}catch(err){
+console.log("Family preload failed",err);
 }
 
 }
