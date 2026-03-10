@@ -232,8 +232,8 @@ if(scanLock) return;
 
 scanLock = true;
 
-let lines = decoded.split("\n");
-let familyId = lines[0].replace("\r","").trim();
+let lines = (decoded || "").split("\n");
+let familyId = (lines[0] || "").replace("\r","").trim();
 
 /* ignore repeated scans of same QR */
 if(familyId === lastScanned){
@@ -270,6 +270,7 @@ return;
 collapseCamera();
 
 await loadFamily(familyId);
+scanLock = false;
 
 }
 
