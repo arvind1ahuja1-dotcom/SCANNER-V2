@@ -243,10 +243,6 @@ return;
 
 lastScanned = familyId;
 
-setTimeout(()=>{
-lastScanned = "";
-},2000);
-
 /* invalid QR check */
 
 if(!familyId.startsWith("FAM")){
@@ -460,10 +456,7 @@ function collapseCamera(){
 
 const reader = document.getElementById("reader");
 
-/* hide scanner completely */
-reader.style.display="none";
-
-/* remove scanner UI */
+/* stop scanner UI but keep container visible */
 reader.innerHTML="";
 
 }
