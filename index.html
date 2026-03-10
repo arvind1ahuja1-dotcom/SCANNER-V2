@@ -454,9 +454,11 @@ SCAN NEXT GUEST
 
 function collapseCamera(){
 
-const reader = document.getElementById("reader");
+if(scannerInstance){
+try{ scannerInstance.clear(); }catch(e){}
+}
 
-/* stop scanner UI but keep container visible */
+const reader = document.getElementById("reader");
 reader.innerHTML="";
 
 }
