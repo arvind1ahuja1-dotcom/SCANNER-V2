@@ -465,13 +465,12 @@ reader.innerHTML="";
 
 function resetScanner(){
 
+let warn = document.getElementById("dupWarning");
+if(warn) warn.remove();
+
 if(scannerInstance){
 try{ scannerInstance.clear(); }catch(e){}
 }
-
-/* remove any alert */
-let warn = document.getElementById("dupWarning");
-if(warn) warn.remove();
 
 /* reset scan guards */
 scanLock = false;
