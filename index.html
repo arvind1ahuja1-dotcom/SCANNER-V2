@@ -405,17 +405,17 @@ return;
 }
   
 let payload={
-action:"submit",
-func:activeFunction,
-family:fid,
-primary:document.querySelector(".member span")?.innerText || "",
-familyName:fname,
-registered:boxes.length,
-arrived:arrived,
-extra:0,
-names:names.join(", "),
-device:userName,
-method:"QR Scan"
+  action:"submit",
+  func:activeFunction,
+  family:fid,
+  primary:document.querySelector(".member span")?.innerText || "",
+  familyName:fname,
+  registered: expected,          // ✅ ONLY expected guests
+  arrived: arrivedExpected,      // ✅ ONLY expected who came
+  extra: extraGuests,            // ✅ extra guests detected
+  names:names.join(", "),
+  device:userName,
+  method:"QR Scan"
 };
 
 let res=await fetch(API_URL,{
