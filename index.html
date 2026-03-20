@@ -265,11 +265,8 @@ return;
 /* duplicate check */
 
 if(scannedFamilies[familyId]){
-
 showDuplicateMessage(scannedFamilies[familyId]);
-
 scanLock=false;
-
 return;
 }
 
@@ -279,8 +276,11 @@ collapseCamera();
 if(familyCache[familyId]){
   renderFamily(familyCache[familyId]);
 } else {
-  showInvalidQR();
+  await loadFamily(familyId);
 }
+
+/* ✅ VERY IMPORTANT */
+scanLock = false;
 
 }
 
@@ -431,10 +431,18 @@ let payload={
   method:"QR Scan"
 };
 
-fetch(API_URL,{
+let res = await fetch(API_URL,{
   method:"POST",
   body:JSON.stringify(payload)
 });
+
+let data = await res.json();
+
+if(data.duplicate){
+  showDuplicateMessage(names.join(", "));
+  resetScanner();
+  return;
+}
 
 /* update local attendance cache */
 scannedFamilies[fid]=names.join(", ");
@@ -646,8 +654,11 @@ data.forEach(r=>{
 scannedFamilies[r.family]=r.names;
 });
 
+return true; // ✅ ADD THIS LINE HERE (inside try, at the end)
+
 }catch(err){
 console.log("Attendance preload failed",err);
+return false; // ✅ ALSO ADD THIS (important)
 }
 
 }
@@ -665,8 +676,11 @@ data.forEach(f=>{
 familyCache[f.family] = f;
 });
 
+return true; // ✅ ADD THIS LINE HERE (inside try, at the end)
+
 }catch(err){
 console.log("Family preload failed",err);
+return false; // ✅ ALSO ADD THIS
 }
 
 }
