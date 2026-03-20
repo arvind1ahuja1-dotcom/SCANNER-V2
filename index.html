@@ -380,26 +380,6 @@ async function submit(fid,fname){
 let boxes=document.querySelectorAll("input[type=checkbox]");
 
 let names=[];
-let arrived=0;
-
-boxes.forEach(b=>{
-
-if(b.checked){
-arrived++;
-
-let parent = b.closest(".member");
-if(parent){
-let span = parent.querySelector("span");
-if(span){
-names.push(span.innerText.trim());
-}
-}
-
-}
-
-});
-
-let names=[];
 let expected = 0;
 let arrivedExpected = 0;
 let extraGuests = 0;
@@ -427,6 +407,11 @@ boxes.forEach(b=>{
   }
 
 });
+
+  if(arrivedExpected === 0){
+  alert("At least one invited guest must be present.");
+  return;
+}
   
 let payload={
   action:"submit",
