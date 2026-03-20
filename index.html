@@ -482,10 +482,10 @@ ${names.join(", ")}
 <div style="font-size:20px;margin-bottom:25px;font-weight:bold;">
 ${
   extraGuests > 0
-    ? `⚠ ${extraGuests} Extra Guest${extraGuests>1?"s":""}`
+    ? `⚠ ${extraGuests} Unregistered Guest${extraGuests>1?"s":""}`
     : (arrivedExpected < expected
         ? `⚠ ${expected - arrivedExpected} Guest Missing`
-        : `All Guests Present`)
+        : `All Registered Guests Present`)
 }
 </div>
 
