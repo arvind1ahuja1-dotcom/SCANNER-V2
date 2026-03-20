@@ -446,7 +446,15 @@ scannedFamilies[fid]=names.join(", ");
 /* prevent same QR from firing again */
 lastScanned = fid;
 
-let color = (arrivedExpected === expected) ? "#2e7d32" : "#ed6c02";
+let color;
+
+if(extraGuests > 0){
+  color = "#800020"; // BURGUNDY
+}else if(arrivedExpected < expected){
+  color = "#ed6c02"; // ORANGE
+}else{
+  color = "#2e7d32"; // GREEN
+}
 
 document.getElementById("familyCard").innerHTML = `
 
