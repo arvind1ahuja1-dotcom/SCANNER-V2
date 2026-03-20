@@ -420,7 +420,7 @@ let payload={
   primary:document.querySelector(".member span")?.innerText || "",
   familyName:fname,
   registered: expected,          // ✅ ONLY expected guests
-  arrived: arrivedExpected,      // ✅ ONLY expected who came
+  arrived: arrivedExpected + extraGuests,     // ✅ Actual who came
   extra: extraGuests,            // ✅ extra guests detected
   names:names.join(", "),
   device:userName,
