@@ -475,6 +475,20 @@ WELCOME
 ${document.querySelector(".member span").innerText} ${fname} Family
 </div>
 
+<div style="font-size:22px;margin-bottom:20px">
+${names.join(", ")}
+</div>
+
+<div style="font-size:20px;margin-bottom:25px;font-weight:bold;">
+${
+  extraGuests > 0
+    ? `⚠ ${extraGuests} Extra Guest${extraGuests>1?"s":""}`
+    : (arrivedExpected < expected
+        ? `⚠ ${expected - arrivedExpected} Guest Missing`
+        : `All Guests Present`)
+}
+</div>
+
 <button
 style="
 font-size:22px;
