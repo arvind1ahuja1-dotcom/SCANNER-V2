@@ -229,8 +229,8 @@ document.getElementById("functionTitle").innerText=data.name;
 resetScanner();
 
 /* preload attendance log */
-preloadAttendance();
-preloadFamilies();
+await preloadAttendance();
+await preloadFamilies();
 
 }
 
@@ -279,7 +279,7 @@ collapseCamera();
 if(familyCache[familyId]){
   renderFamily(familyCache[familyId]);
 } else {
-  await loadFamily(familyId); // fallback only
+  showInvalidQR();
 }
 
 }
@@ -435,14 +435,6 @@ fetch(API_URL,{
   method:"POST",
   body:JSON.stringify(payload)
 });
-
-let data=await res.json();
-
-if(data.duplicate){
-showDuplicateMessage(names.join(", "));
-resetScanner();
-return;
-}
 
 /* update local attendance cache */
 scannedFamilies[fid]=names.join(", ");
