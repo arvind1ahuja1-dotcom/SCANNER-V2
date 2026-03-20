@@ -327,7 +327,12 @@ data.members.forEach((m,i)=>{
 html+=`
 <label class="member">
 <span>${m.name}</span>
-<input type="checkbox" checked id="m${i}">
+html+=`
+<label class="member">
+<span>${m.name}</span>
+<input type="checkbox" ${m.attending ? "checked" : ""} id="m${i}">
+</label>
+`;
 </label>
 `;
 
