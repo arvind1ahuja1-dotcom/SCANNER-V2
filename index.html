@@ -279,6 +279,9 @@ if(familyCache[familyId]){
   await loadFamily(familyId);
 }
 
+/* ✅ ADD THIS LINE */
+lastScanned = familyId;
+  
 /* ✅ VERY IMPORTANT */
 setTimeout(()=>{
   scanLock = false;
@@ -311,6 +314,8 @@ renderFamily(data);
 }
 
 function renderFamily(data){
+
+window.currentPrimaryName = data.members[0]?.name || "";
 
 let html=`
 <div class="familyCard">
@@ -418,17 +423,7 @@ if(names.length === 0){
   return;
 }
 
-//
-// ✅ PRIMARY NAME (Member1 ONLY)
-//
-let primaryName = "";
-
-if(boxes.length > 0){
-  let first = boxes[0].closest(".member");
-  if(first){
-    primaryName = first.querySelector("span").innerText.trim();
-  }
-}
+let primaryName = window.currentPrimaryName || "";
 
 //
 // ✅ CLEAN PAYLOAD (NO EXTRA CODE INSIDE)
