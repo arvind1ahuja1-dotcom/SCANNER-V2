@@ -276,11 +276,7 @@ return;
 /* collapse camera box */
 collapseCamera();
 
-if(familyCache[familyId]){
-renderFamily(familyCache[familyId]);
-}else{
 await loadFamily(familyId);
-}
 
 }
 
