@@ -408,8 +408,8 @@ boxes.forEach(b=>{
 
 });
 
-  if(arrivedExpected === 0){
-  alert("At least one invited guest must be present.");
+  if(names.length === 0){
+  alert("Please select at least one guest.");
   return;
 }
   
@@ -419,9 +419,9 @@ let payload={
   family:fid,
   primary:document.querySelector(".member span")?.innerText || "",
   familyName:fname,
-  registered: expected,          // ✅ ONLY expected guests
-  arrived: arrivedExpected + extraGuests,     // ✅ Actual who came
-  extra: extraGuests,            // ✅ extra guests detected
+  registered: expected,        // ✅ ONLY expected guests
+  arrived: arrivedExpected,    // ✅ Actual who came
+  extra: extraGuests,          // ✅ extra guests detected
   names:names.join(", "),
   device:userName,
   method:"QR Scan"
