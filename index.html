@@ -280,7 +280,9 @@ if(familyCache[familyId]){
 }
 
 /* ✅ VERY IMPORTANT */
-scanLock = false;
+setTimeout(()=>{
+  scanLock = false;
+}, 300);
 
 }
 
@@ -400,7 +402,6 @@ boxes.forEach(b=>{
   }
 
   if(b.checked){
-
     names.push(name);
 
     if(isExpected){
@@ -412,37 +413,47 @@ boxes.forEach(b=>{
 
 });
 
-  if(names.length === 0){
+if(names.length === 0){
   alert("Please select at least one guest.");
   return;
 }
-  
+
+//
+// ✅ PRIMARY NAME (Member1 ONLY)
+//
+let primaryName = "";
+
+if(boxes.length > 0){
+  let first = boxes[0].closest(".member");
+  if(first){
+    primaryName = first.querySelector("span").innerText.trim();
+  }
+}
+
+//
+// ✅ CLEAN PAYLOAD (NO EXTRA CODE INSIDE)
+//
 let payload={
   action:"submit",
   func:activeFunction,
   family:fid,
-  primary:document.querySelector(".member span")?.innerText || "",
+  primary: primaryName,
   familyName:fname,
-  registered: expected,        // ✅ ONLY expected guests
-  arrived: arrivedExpected,    // ✅ Actual who came
-  extra: extraGuests,          // ✅ extra guests detected
+  registered: expected,
+  arrived: arrivedExpected,
+  extra: extraGuests,
   names:names.join(", "),
   device:userName,
   method:"QR Scan"
 };
 
-let res = await fetch(API_URL,{
+//
+// ✅ FIRE AND FORGET (FAST)
+//
+fetch(API_URL,{
   method:"POST",
   body:JSON.stringify(payload)
-});
-
-let data = await res.json();
-
-if(data.duplicate){
-  showDuplicateMessage(names.join(", "));
-  resetScanner();
-  return;
-}
+}).catch(err => console.log("Write failed", err));
 
 /* update local attendance cache */
 scannedFamilies[fid]=names.join(", ");
@@ -453,11 +464,11 @@ lastScanned = fid;
 let color;
 
 if(extraGuests > 0){
-  color = "#800020"; // BURGUNDY
+  color = "#800020";
 }else if(arrivedExpected < expected){
-  color = "#ed6c02"; // ORANGE
+  color = "#ed6c02";
 }else{
-  color = "#2e7d32"; // GREEN
+  color = "#2e7d32";
 }
 
 document.getElementById("familyCard").innerHTML = `
@@ -476,7 +487,7 @@ WELCOME
 </h1>
 
 <div style="font-size:26px;margin-bottom:30px">
-${document.querySelector(".member span").innerText} ${fname} Family
+${primaryName} ${fname} Family
 </div>
 
 <div style="font-size:22px;margin-bottom:20px">
