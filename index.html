@@ -320,14 +320,21 @@ Absent Guest? Tap Name to Remove Tick
 
 data.members.forEach((m,i)=>{
 
+let isAttending = m.attending;
+
+let bgColor = isAttending ? "#ffffff" : "#fdecea";   // light red
+let textColor = isAttending ? "#000000" : "#c62828"; // dark red
+
 html+=`
-<label class="member">
-<span>${m.name}</span>
-<input 
-  type="checkbox" 
-  ${m.attending ? "checked" : ""} 
-  data-expected="${m.attending ? "true" : "false"}"
-  id="m${i}">
+<label class="member" style="background:${bgColor}; border-radius:8px;">
+  <span style="color:${textColor}; font-weight:${isAttending ? "normal" : "bold"};">
+    ${m.name}
+  </span>
+  <input 
+    type="checkbox" 
+    ${isAttending ? "checked" : ""} 
+    data-expected="${isAttending ? "true" : "false"}"
+    id="m${i}">
 </label>
 `;
 
