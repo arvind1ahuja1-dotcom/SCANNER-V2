@@ -327,7 +327,11 @@ data.members.forEach((m,i)=>{
 html+=`
 <label class="member">
 <span>${m.name}</span>
-<input type="checkbox" ${m.attending ? "checked" : ""} id="m${i}">
+<input 
+  type="checkbox" 
+  ${m.attending ? "checked" : ""} 
+  data-expected="${m.attending ? "true" : "false"}"
+  id="m${i}">
 </label>
 `;
 
@@ -430,7 +434,24 @@ scannedFamilies[fid]=names.join(", ");
 /* prevent same QR from firing again */
 lastScanned = fid;
   
-let color = (arrived==boxes.length) ? "#2e7d32" : "#ed6c02";
+let expected = 0;
+let arrivedExpected = 0;
+
+boxes.forEach(b=>{
+
+let isExpected = b.dataset.expected === "true";
+
+if(isExpected){
+expected++;
+
+if(b.checked){
+arrivedExpected++;
+}
+}
+
+});
+
+let color = (arrivedExpected === expected) ? "#2e7d32" : "#ed6c02";
 
 document.getElementById("familyCard").innerHTML = `
 
