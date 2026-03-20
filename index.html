@@ -399,10 +399,34 @@ names.push(span.innerText.trim());
 
 });
 
-if(names.length === 0){
-alert("At least one guest must be present.");
-return;
-}
+let names=[];
+let expected = 0;
+let arrivedExpected = 0;
+let extraGuests = 0;
+
+boxes.forEach(b=>{
+
+  let isExpected = b.dataset.expected === "true";
+
+  let parent = b.closest(".member");
+  let name = parent ? parent.querySelector("span").innerText.trim() : "";
+
+  if(isExpected){
+    expected++;
+  }
+
+  if(b.checked){
+
+    names.push(name);
+
+    if(isExpected){
+      arrivedExpected++;
+    }else{
+      extraGuests++;
+    }
+  }
+
+});
   
 let payload={
   action:"submit",
@@ -436,23 +460,6 @@ scannedFamilies[fid]=names.join(", ");
 
 /* prevent same QR from firing again */
 lastScanned = fid;
-  
-let expected = 0;
-let arrivedExpected = 0;
-
-boxes.forEach(b=>{
-
-let isExpected = b.dataset.expected === "true";
-
-if(isExpected){
-expected++;
-
-if(b.checked){
-arrivedExpected++;
-}
-}
-
-});
 
 let color = (arrivedExpected === expected) ? "#2e7d32" : "#ed6c02";
 
