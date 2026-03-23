@@ -826,15 +826,23 @@ async function submitHostPin(){
 
   if(data.success){
 
-    approvedExtraGuests = pendingGuestsGlobal;
-
     closePinModal();
 
-    proceedSubmitAfterPin();
+    // ✅ DIRECTLY CONTINUE WITHOUT RE-CALLING submit()
+    await finalizeSubmissionAfterPin();
 
   }else{
     alert("Invalid PIN");
   }
+
+}
+
+async function finalizeSubmissionAfterPin(){
+
+  approvedExtraGuests = pendingGuestsGlobal;
+
+  // continue submission WITHOUT resetting state
+  await submit(currentFamilyId, currentFamilyName);
 
 }
 
