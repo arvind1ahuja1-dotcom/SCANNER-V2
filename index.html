@@ -101,6 +101,8 @@ OKAY
 
 <h3 id="functionTitle"></h3>
 
+<div id="pendingCounter" style="font-size:18px;color:#c62828;margin-bottom:10px"></div>
+
 <div id="reader" style="width:320px;margin:auto;"></div>
 
 <div id="familyCard"></div>
@@ -231,7 +233,8 @@ resetScanner();
 /* preload attendance log */
 await preloadAttendance();
 await preloadFamilies();
-
+await loadPendingCount();
+  
 }
 
 let scanLock=false;
@@ -352,6 +355,7 @@ html+=`
 <div style="display:flex;justify-content:space-between;margin-top:25px">
 
 <button
+onclick="openGuestPanel()"
 style="
 background:#ed6c02;
 color:white;
@@ -387,12 +391,13 @@ async function submit(fid,fname){
 
 let boxes=document.querySelectorAll("input[type=checkbox]");
 
-let names=[];
+let names=[];                 // ALL selected
+let approvedNames=[];         // ONLY expected guests
+let pendingGuests=[];         // NEED approval
+
 let expected = 0;
 let arrivedExpected = 0;
 let extraGuests = 0;
-let requiresApproval = false;
-let unapprovedGuests = [];
 
 boxes.forEach(b=>{
 
@@ -406,17 +411,17 @@ boxes.forEach(b=>{
   }
 
   if(b.checked){
+
     names.push(name);
 
     if(isExpected){
       arrivedExpected++;
+      approvedNames.push(name);
     }else{
       extraGuests++;
-
-      // 🔴 NEW: requires approval
-      requiresApproval = true;
-      unapprovedGuests.push(name);
+      pendingGuests.push(name);
     }
+
   }
 
 });
@@ -428,25 +433,60 @@ if(names.length === 0){
 
 let primaryName = window.currentPrimaryName || "";
 
-// 🔴 BLOCK submission if unapproved guests exist
-if(requiresApproval){
+// 🔴 HANDLE EXTRA GUESTS (PIN OR PENDING)
 
-  alert("⚠ Unregistered / Not Attending Guests Require Host Approval");
+let approvedExtraGuests = [];
 
-  await fetch(API_URL,{
-    method:"POST",
-    body: JSON.stringify({
-      action:"requestApproval",
-      func:activeFunction,
-      family:fid,
-      familyName:fname,
-      guests:unapprovedGuests,
-      device:userName
-    })
-  });
+if(pendingGuests.length > 0){
 
-  resetScanner();
-  return;
+  let usePin = confirm(
+    "⚠ Unregistered / Not Attending Guests Detected\n\n" +
+    pendingGuests.join(", ") +
+    "\n\nPress OK to enter HOST PIN\nPress Cancel to send for approval"
+  );
+
+  if(usePin){
+
+    let pin = prompt("Enter HOST PIN");
+
+    if(pin){
+
+      let res = await fetch(API_URL+"?action=verifyHostPin&pin="+pin);
+      let data = await res.json();
+
+      if(data.success){
+
+        approvedExtraGuests = pendingGuests;
+
+      }else{
+
+        alert("Invalid PIN. Guests will be sent for approval.");
+
+      }
+
+    }
+
+  }
+
+  // Remaining unapproved → pending
+  let stillPending = pendingGuests.filter(n => !approvedExtraGuests.includes(n));
+
+  if(stillPending.length > 0){
+
+    await fetch(API_URL,{
+      method:"POST",
+      body: JSON.stringify({
+        action:"requestApproval",
+        func:activeFunction,
+        family:fid,
+        familyName:fname,
+        guests:stillPending,
+        device:userName
+      })
+    });
+
+  }
+
 }
 
 //
@@ -460,8 +500,8 @@ let payload={
   familyName:fname,
   registered: expected,
   arrived: arrivedExpected,
-  extra: extraGuests,
-  names:names.join(", "),
+  extra: approvedExtraGuests.length,
+  names:approvedNames.concat(approvedExtraGuests).join(", "),
   device:userName,
   method:"QR Scan"
 };
@@ -715,7 +755,16 @@ return false; // ✅ ALSO ADD THIS
 
 }
 
-  
+async function loadPendingCount(){
+
+  let res = await fetch(API_URL+"?action=getPending&func="+activeFunction);
+  let data = await res.json();
+
+  document.getElementById("pendingCounter").innerText =
+    data.length > 0 ? "Pending 🔴 " + data.length : "";
+
+}
+
 </script>
 
 </body>
