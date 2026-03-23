@@ -437,7 +437,12 @@ async function submit(fid,fname){
 
 currentFamilyId = fid;
 currentFamilyName = fname;
-approvedExtraGuests = [];
+// Only reset if NOT coming from PIN flow
+if(approvedExtraGuests.length === 0){
+  approvedExtraGuests = [];
+}
+
+let isPostPinFlow = approvedExtraGuests.length > 0;
 
 let boxes=document.querySelectorAll("input[type=checkbox]");
 
@@ -485,7 +490,7 @@ let primaryName = window.currentPrimaryName || "";
 
 // 🔴 HANDLE EXTRA GUESTS (PIN OR PENDING)
 
-if(pendingGuests.length > 0){
+if(pendingGuests.length > 0 && !isPostPinFlow){
 
   let proceed = confirm(
     "Unregistered Guest(s):\n\n" +
