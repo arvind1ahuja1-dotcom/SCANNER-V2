@@ -51,10 +51,10 @@ dataStore = data;
 
 let html="";
 
-data.forEach((g,i)=>{
+data.forEach((g)=>{
 html+=`
 <div class="item">
-<input type="checkbox" value="${i}">
+<input type="checkbox" value="${g.row}">
 ${g.name} (${g.family})
 </div>`;
 });
