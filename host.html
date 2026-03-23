@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: Arial; text-align:center; }
+.item { margin:10px; font-size:18px; }
+</style>
+</head>
+
+<body>
+
+<h2>Pending Approvals</h2>
+
+<div id="list"></div>
+
+<br>
+
+<button onclick="approve()" style="background:#2e7d32;color:white">Approve</button>
+<button onclick="reject()" style="background:#c62828;color:white">Reject</button>
+
+<script>
+
+const API = "https://script.google.com/macros/s/AKfycbwfBi1pESnwh8ZMSDPLATpjZHEMV3npR6146FfdMOSrbXvTlJ7f7g4ZmG1dojHulhY/exec";
+
+let activeFunction="";
+let dataStore=[];
+
+async function init(){
+
+let res = await fetch(API+"?action=active");
+let d = await res.json();
+
+if(!d.active){
+alert("No active function");
+return;
+}
+
+activeFunction = d.id;
+
+load();
+
+}
+
+async function load(){
+
+let res = await fetch(API+"?action=getPending&func="+activeFunction);
+let data = await res.json();
+
+dataStore = data;
+
+let html="";
+
+data.forEach((g,i)=>{
+html+=`
+<div class="item">
+<input type="checkbox" value="${i}">
+${g.name} (${g.family})
+</div>`;
+});
+
+document.getElementById("list").innerHTML=html;
+
+}
+
+function getSelected(){
+return [...document.querySelectorAll("input:checked")]
+.map(x=>parseInt(x.value));
+}
+
+async function approve(){
+
+let rows = getSelected();
+
+if(rows.length==0){
+alert("Select at least one guest");
+return;
+}
+
+let pin = prompt("Enter Host PIN");
+
+let verify = await fetch(API+"?action=verifyHostPin&pin="+pin);
+let v = await verify.json();
+
+if(!v.success){
+alert("Invalid PIN");
+return;
+}
+
+await fetch(API,{
+method:"POST",
+body: JSON.stringify({
+action:"approveGuest",
+rows:rows,
+host:v.name
+})
+});
+
+load();
+
+}
+
+async function reject(){
+
+let rows = getSelected();
+
+if(rows.length==0){
+alert("Select at least one guest");
+return;
+}
+
+await fetch(API,{
+method:"POST",
+body: JSON.stringify({
+action:"rejectGuest",
+rows:rows
+})
+});
+
+load();
+
+}
+
+init();
+
+</script>
+
+</body>
+</html>
