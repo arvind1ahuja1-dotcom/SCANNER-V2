@@ -391,6 +391,8 @@ let names=[];
 let expected = 0;
 let arrivedExpected = 0;
 let extraGuests = 0;
+let requiresApproval = false;
+let unapprovedGuests = [];
 
 boxes.forEach(b=>{
 
@@ -410,6 +412,10 @@ boxes.forEach(b=>{
       arrivedExpected++;
     }else{
       extraGuests++;
+
+      // 🔴 NEW: requires approval
+      requiresApproval = true;
+      unapprovedGuests.push(name);
     }
   }
 
@@ -421,6 +427,27 @@ if(names.length === 0){
 }
 
 let primaryName = window.currentPrimaryName || "";
+
+// 🔴 BLOCK submission if unapproved guests exist
+if(requiresApproval){
+
+  alert("⚠ Unregistered / Not Attending Guests Require Host Approval");
+
+  await fetch(API_URL,{
+    method:"POST",
+    body: JSON.stringify({
+      action:"requestApproval",
+      func:activeFunction,
+      family:fid,
+      familyName:fname,
+      guests:unapprovedGuests,
+      device:userName
+    })
+  });
+
+  resetScanner();
+  return;
+}
 
 //
 // ✅ CLEAN PAYLOAD (NO EXTRA CODE INSIDE)
