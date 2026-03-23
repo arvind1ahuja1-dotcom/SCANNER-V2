@@ -169,6 +169,10 @@ const SESSION_HOURS = 6;
 let userName="";
 let activeFunction="";
 
+let currentFamilyId="";
+let currentFamilyName="";
+let approvedExtraGuests=[];
+
 window.onload = function(){
 
 let user = localStorage.getItem("scannerUser");
@@ -431,6 +435,10 @@ document.getElementById("familyCard").innerHTML=html;
   
 async function submit(fid,fname){
 
+currentFamilyId = fid;
+currentFamilyName = fname;
+approvedExtraGuests = [];
+
 let boxes=document.querySelectorAll("input[type=checkbox]");
 
 let names=[];                 // ALL selected
@@ -482,64 +490,28 @@ let approvedExtraGuests = [];
 if(pendingGuests.length > 0){
 
   let proceed = confirm(
-  "Unregistered Guest(s):\n\n" +
-  pendingGuests.join(", ") + " (" + fname + ")" +
-  "\n\nPress OK to Enter PIN\nPress Cancel to Send for Approval"
-);
+    "Unregistered Guest(s):\n\n" +
+    pendingGuests.join(", ") + " (" + fname + ")" +
+    "\n\nOK = Enter PIN\nCancel = Send for Approval"
+  );
 
-if(proceed){
-  openPinModal(pendingGuests,fname);
-  return; // STOP here → wait for PIN
-}
-  
-  function proceedSubmitAfterPin(){
-
-  // re-trigger submit without pending guests
-  submit(currentFamilyId,currentFamilyName);
-
-}
-
-  if(usePin){
-
-    let pin = <input type="tel" inputmode="numeric" maxlength="6">;
-
-    if(pin){
-
-      let res = await fetch(API_URL+"?action=verifyHostPin&pin="+pin);
-      let data = await res.json();
-
-      if(data.success){
-
-        approvedExtraGuests = pendingGuests;
-
-      }else{
-
-        alert("Invalid PIN. Guests will be sent for approval.");
-
-      }
-
-    }
-
+  if(proceed){
+    openPinModal(pendingGuests,fname);
+    return; // wait for PIN
   }
 
-  // Remaining unapproved → pending
-  let stillPending = pendingGuests.filter(n => !approvedExtraGuests.includes(n));
-
-  if(stillPending.length > 0){
-
-    await fetch(API_URL,{
-      method:"POST",
-      body: JSON.stringify({
-        action:"requestApproval",
-        func:activeFunction,
-        family:fid,
-        familyName:fname,
-        guests:stillPending,
-        device:userName
-      })
-    });
-
-  }
+  // Send ALL to pending (no PIN used)
+  await fetch(API_URL,{
+    method:"POST",
+    body: JSON.stringify({
+      action:"requestApproval",
+      func:activeFunction,
+      family:fid,
+      familyName:fname,
+      guests:pendingGuests,
+      device:userName
+    })
+  });
 
 }
 
@@ -852,14 +824,19 @@ async function submitHostPin(){
   if(data.success){
 
     approvedExtraGuests = pendingGuestsGlobal;
+
     closePinModal();
 
-    proceedSubmitAfterPin(); // continue flow
+    proceedSubmitAfterPin();
 
   }else{
     alert("Invalid PIN");
   }
 
+}
+
+function proceedSubmitAfterPin(){
+  submit(currentFamilyId,currentFamilyName);
 }
 
 </script>
