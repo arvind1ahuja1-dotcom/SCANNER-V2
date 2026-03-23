@@ -107,6 +107,48 @@ OKAY
 
 <div id="familyCard"></div>
 
+<div id="pinModal" style="
+display:none;
+position:fixed;
+top:0;left:0;right:0;bottom:0;
+background:rgba(0,0,0,0.6);
+z-index:9999;
+justify-content:center;
+align-items:center;
+">
+
+<div style="
+background:white;
+padding:20px;
+border-radius:10px;
+width:300px;
+text-align:center;
+">
+
+<h3>Enter Host PIN</h3>
+
+<div id="pinGuestInfo" style="margin-bottom:10px;font-size:14px;color:#555"></div>
+
+<input id="hostPinInput"
+type="tel"
+inputmode="numeric"
+maxlength="6"
+placeholder="Enter 6-digit PIN"
+style="width:90%;padding:10px;font-size:20px;text-align:center">
+
+<br><br>
+
+<button onclick="submitHostPin()" style="background:#2e7d32;color:white">
+Submit
+</button>
+
+<button onclick="closePinModal()" style="background:#ccc">
+Cancel
+</button>
+
+</div>
+</div>
+
 </div>
 
 
@@ -439,15 +481,27 @@ let approvedExtraGuests = [];
 
 if(pendingGuests.length > 0){
 
-  let usePin = confirm(
-    "⚠ Unregistered / Not Attending Guests Detected\n\n" +
-    pendingGuests.join(", ") +
-    "\n\nPress OK to enter HOST PIN\nPress Cancel to send for approval"
-  );
+  let proceed = confirm(
+  "Unregistered Guest(s):\n\n" +
+  pendingGuests.join(", ") + " (" + fname + ")" +
+  "\n\nPress OK to Enter PIN\nPress Cancel to Send for Approval"
+);
+
+if(proceed){
+  openPinModal(pendingGuests,fname);
+  return; // STOP here → wait for PIN
+}
+  
+  function proceedSubmitAfterPin(){
+
+  // re-trigger submit without pending guests
+  submit(currentFamilyId,currentFamilyName);
+
+}
 
   if(usePin){
 
-    let pin = prompt("Enter HOST PIN");
+    let pin = <input type="tel" inputmode="numeric" maxlength="6">;
 
     if(pin){
 
@@ -762,6 +816,49 @@ async function loadPendingCount(){
 
   document.getElementById("pendingCounter").innerText =
     data.length > 0 ? "Pending 🔴 " + data.length : "";
+
+}
+
+let pendingGuestsGlobal = [];
+let pendingFamilyGlobal = "";
+
+function openPinModal(guests,familyName){
+  pendingGuestsGlobal = guests;
+  pendingFamilyGlobal = familyName;
+
+  document.getElementById("pinGuestInfo").innerText =
+    guests.join(", ") + " (" + familyName + ")";
+
+  document.getElementById("hostPinInput").value = "";
+  document.getElementById("pinModal").style.display = "flex";
+}
+
+function closePinModal(){
+  document.getElementById("pinModal").style.display = "none";
+}
+
+async function submitHostPin(){
+
+  let pin = document.getElementById("hostPinInput").value;
+
+  if(pin.length !== 6){
+    alert("Enter valid 6-digit PIN");
+    return;
+  }
+
+  let res = await fetch(API_URL+"?action=verifyHostPin&pin="+pin);
+  let data = await res.json();
+
+  if(data.success){
+
+    approvedExtraGuests = pendingGuestsGlobal;
+    closePinModal();
+
+    proceedSubmitAfterPin(); // continue flow
+
+  }else{
+    alert("Invalid PIN");
+  }
 
 }
 
