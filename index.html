@@ -485,8 +485,6 @@ let primaryName = window.currentPrimaryName || "";
 
 // 🔴 HANDLE EXTRA GUESTS (PIN OR PENDING)
 
-let approvedExtraGuests = [];
-
 if(pendingGuests.length > 0){
 
   let proceed = confirm(
@@ -512,6 +510,8 @@ if(pendingGuests.length > 0){
       device:userName
     })
   });
+
+await loadPendingCount();
 
 }
 
@@ -539,6 +539,9 @@ fetch(API_URL,{
   method:"POST",
   body:JSON.stringify(payload)
 }).catch(err => console.log("Write failed", err));
+
+/* ✅ ADD THIS LINE RIGHT HERE */
+await loadPendingCount();
 
 /* update local attendance cache */
 scannedFamilies[fid]=names.join(", ");
