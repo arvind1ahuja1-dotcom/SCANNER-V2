@@ -101,7 +101,24 @@ OKAY
 
 <h3 id="functionTitle"></h3>
 
-<div id="pendingCounter" style="font-size:18px;color:#c62828;margin-bottom:10px"></div>
+<div id="hostControls" style="display:none;">
+
+  <div 
+    id="pendingCounter"
+    onclick="openApprovalPanel()"
+    style="
+      font-size:18px;
+      color:white;
+      background:#c62828;
+      display:inline-block;
+      padding:8px 14px;
+      border-radius:20px;
+      cursor:pointer;
+      margin-bottom:10px
+    ">
+  </div>
+
+</div>
 
 <div id="reader" style="width:320px;margin:auto;"></div>
 
@@ -154,6 +171,8 @@ Cancel
 
 <script>
 
+let pendingInterval = null;
+
 let lastScanned = "";
 
 let scannerInstance=null;
@@ -168,6 +187,7 @@ const SESSION_HOURS = 6;
 
 let userName="";
 let activeFunction="";
+let userRole="";
 
 let currentFamilyId="";
 let currentFamilyName="";
@@ -185,6 +205,7 @@ let diff = (Date.now() - time) / 3600000;
 if(diff < SESSION_HOURS){
 
 userName = user;
+userRole = localStorage.getItem("scannerRole") || "";
 
 document.getElementById("login").style.display="none";
 document.getElementById("scanner").style.display="block";
@@ -240,6 +261,9 @@ return;
 
 userName=data.name;
 
+userRole = data.role;
+localStorage.setItem("scannerRole", userRole);
+
 /* SAVE SESSION */
 localStorage.setItem("scannerUser", userName);
 localStorage.setItem("loginTime", Date.now());
@@ -274,12 +298,22 @@ activeFunction=data.id;
 
 document.getElementById("functionTitle").innerText=data.name;
 
+if(userRole === "HOST"){
+  document.getElementById("hostControls").style.display="block";
+}
+
 resetScanner();
 
 /* preload attendance log */
 await preloadAttendance();
 await preloadFamilies();
 await loadPendingCount();
+
+if(!pendingInterval){
+  pendingInterval = setInterval(async ()=>{
+    await loadPendingCount();
+  }, 5000);
+}
   
 }
 
@@ -437,10 +471,6 @@ async function submit(fid,fname){
 
 currentFamilyId = fid;
 currentFamilyName = fname;
-// Only reset if NOT coming from PIN flow
-if(approvedExtraGuests.length === 0){
-  approvedExtraGuests = [];
-}
 
 let isPostPinFlow = approvedExtraGuests.length > 0;
 
@@ -487,6 +517,10 @@ if(names.length === 0){
 }
 
 let primaryName = window.currentPrimaryName || "";
+
+if(isPostPinFlow){
+  pendingGuests = [];
+}
 
 // 🔴 HANDLE EXTRA GUESTS (PIN OR PENDING)
 
@@ -795,8 +829,78 @@ async function loadPendingCount(){
   let data = await res.json();
 
   document.getElementById("pendingCounter").innerText =
-    data.length > 0 ? "Pending 🔴 " + data.length : "";
+  data.length > 0 ? "Pending 🔴 " + data.length : "No Pending";
 
+}
+
+let pendingData = [];
+
+async function openApprovalPanel(){
+
+  document.getElementById("approvalPanel").style.display="block";
+
+  let res = await fetch(API_URL+"?action=getPending&func="+activeFunction);
+  let data = await res.json();
+
+  pendingData = data;
+
+  let html="";
+
+  data.forEach(g=>{
+    html += `
+    <div style="margin:10px;font-size:18px">
+      <input type="checkbox" value="${g.row}">
+      ${g.name} (${g.family})
+    </div>`;
+  });
+
+  document.getElementById("approvalList").innerHTML = html;
+}
+
+function closeApprovalPanel(){
+  document.getElementById("approvalPanel").style.display="none";
+}
+
+function getSelectedRows(){
+  return [...document.querySelectorAll("#approvalList input:checked")]
+    .map(x=>parseInt(x.value));
+}
+
+let approvalAction = "";
+let approvalRows = [];
+
+function openPinModalForApproval(rows, action){
+  approvalRows = rows;
+  approvalAction = action;
+
+  document.getElementById("pinGuestInfo").innerText =
+    "Approve / Reject Selected Guests";
+
+  document.getElementById("pinModal").style.display = "flex";
+}
+
+async function approveSelected(){
+
+  let rows = getSelectedRows();
+
+  if(rows.length === 0){
+    alert("Select at least one");
+    return;
+  }
+
+  openPinModalForApproval(rows, "approve");
+}
+
+async function rejectSelected(){
+
+  let rows = getSelectedRows();
+
+  if(rows.length === 0){
+    alert("Select at least one");
+    return;
+  }
+
+  openPinModalForApproval(rows, "reject");
 }
 
 let pendingGuestsGlobal = [];
@@ -831,12 +935,34 @@ async function submitHostPin(){
 
   if(data.success){
 
-    closePinModal();
+  closePinModal();
 
-    // ✅ DIRECTLY CONTINUE WITHOUT RE-CALLING submit()
-    await finalizeSubmissionAfterPin();
+  // 🔴 APPROVAL FLOW
+  if(approvalRows.length > 0){
 
-  }else{
+    await fetch(API_URL,{
+      method:"POST",
+      body: JSON.stringify({
+        action: approvalAction === "approve" ? "approveGuest" : "rejectGuest",
+        rows: approvalRows,
+        host: data.name
+      })
+    });
+
+    approvalRows = [];
+    approvalAction = "";
+
+closeApprovalPanel();
+    
+    await openApprovalPanel();
+    await loadPendingCount();
+
+    return;
+  }
+
+  // 🟢 NORMAL FLOW
+  await finalizeSubmissionAfterPin();
+}else{
     alert("Invalid PIN");
   }
 
@@ -857,5 +983,30 @@ function proceedSubmitAfterPin(){
 
 </script>
 
+<div id="approvalPanel" style="
+display:none;
+position:fixed;
+top:0;left:0;right:0;bottom:0;
+background:white;
+z-index:9999;
+overflow:auto;
+padding:20px;
+">
+
+<h2>Pending Approvals</h2>
+
+<div id="approvalList"></div>
+
+<br>
+
+<button onclick="approveSelected()" style="background:#2e7d32;color:white">Approve</button>
+<button onclick="rejectSelected()" style="background:#c62828;color:white">Reject</button>
+
+<br><br>
+
+<button onclick="closeApprovalPanel()">Close</button>
+
+</div>
+  
 </body>
 </html>
