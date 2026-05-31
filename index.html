@@ -105,7 +105,7 @@ OKAY
 
   <div 
     id="pendingCounter"
-    onclick="openApprovalPanel()"
+    onclick="handlePendingClick()"
     style="
       font-size:18px;
       color:white;
@@ -298,9 +298,7 @@ activeFunction=data.id;
 
 document.getElementById("functionTitle").innerText=data.name;
 
-if(userRole === "HOST"){
-  document.getElementById("hostControls").style.display="block";
-}
+document.getElementById("hostControls").style.display="block";
 
 resetScanner();
 
@@ -835,6 +833,16 @@ async function loadPendingCount(){
 
 let pendingData = [];
 
+function handlePendingClick(){
+
+  // ONLY HOST can open approvals
+  if(userRole !== "HOST"){
+    return;
+  }
+
+  openApprovalPanel();
+}
+  
 async function openApprovalPanel(){
 
   document.getElementById("approvalPanel").style.display="block";
