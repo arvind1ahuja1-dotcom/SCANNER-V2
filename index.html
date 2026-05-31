@@ -616,19 +616,23 @@ if(pendingGuests.length > 0 && !isPostPinFlow){
   }
 
   // Send ALL to pending (no PIN used)
-  await fetch(API_URL,{
-    method:"POST",
-    body: JSON.stringify({
-      action:"requestApproval",
-      func:activeFunction,
-      family:fid,
-      familyName:fname,
-      guests:pendingGuests,
-      device:userName
-    })
-  });
+await fetch(API_URL,{
+  method:"POST",
+  body: JSON.stringify({
+    action:"requestApproval",
+    func:activeFunction,
+    family:fid,
+    familyName:fname,
+    guests:pendingGuests,
+    device:userName
+  })
+});
 
 await loadPendingCount();
+
+/* RETURN IMMEDIATELY TO SCANNER */
+resetScanner();
+return;
 
 }
 
@@ -1213,12 +1217,10 @@ async function submitHostPin(){
     approvalAction = "";
 
 closeApprovalPanel();
-    
-    await openApprovalPanel();
-    await loadPendingCount();
+await loadPendingCount();
 
-    return;
-  }
+return;
+}
 
   // 🟢 NORMAL FLOW
   await finalizeSubmissionAfterPin();
