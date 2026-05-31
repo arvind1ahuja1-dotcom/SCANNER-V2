@@ -532,11 +532,8 @@ let boxes=document.querySelectorAll("input[type=checkbox]");
 
 let names=[];                 // ALL selected
 let approvedNames=[];         // ONLY expected guests
-let pendingGuests=[];         // NEED approval
-
 let expected = 0;
 let arrivedExpected = 0;
-let extraGuests = 0;
 
 boxes.forEach(b=>{
 
@@ -556,16 +553,44 @@ boxes.forEach(b=>{
     if(isExpected){
       arrivedExpected++;
       approvedNames.push(name);
-    }else{
-      extraGuests++;
-      pendingGuests.push(name);
     }
 
   }
 
 });
 
-if(names.length === 0){
+// ✅ NEW EXTRA GUEST LOGIC
+
+let pendingGuests = [];
+let extraGuests = 0;
+
+extraGuestsList.forEach(g=>{
+
+  extraGuests++;
+
+  // CONFIRMED RSVP guest
+  if(g.type === "CONFIRMED"){
+    approvedNames.push(g.name);
+  }
+
+  // DECLINED RSVP guest
+  else if(g.type === "DECLINED"){
+    approvedNames.push(g.name);
+  }
+
+  // INVITED but NO RESPONSE
+  else if(g.type === "INVITED_NO_RESPONSE"){
+    approvedNames.push(g.name);
+  }
+
+  // COMPLETELY NEW guest
+  else if(g.type === "NEW"){
+    pendingGuests.push(g.name);
+  }
+
+});
+
+if(names.length === 0 && extraGuestsList.length === 0){
   alert("Please select at least one guest.");
   return;
 }
@@ -619,7 +644,7 @@ let payload={
   familyName:fname,
   registered: expected,
   arrived: arrivedExpected,
-  extra: approvedExtraGuests.length,
+  extra: extraGuests,
   names:approvedNames.concat(approvedExtraGuests).join(", "),
   device:userName,
   method:"QR Scan"
@@ -641,6 +666,7 @@ scannedFamilies[fid]=names.join(", ");
 
 /* prevent same QR from firing again */
 lastScanned = fid;
+extraGuestsList = [];
 
 let color;
 
@@ -745,89 +771,121 @@ let data = await res.json();
 
 if(data.found){
 
-document.getElementById("guestSearchResult").innerHTML=`
-<div style="color:green;font-weight:bold">
-Invited Guest Found
-</div>
+  // ✅ CONFIRMED RSVP
+  if(data.status === "CONFIRMED"){
 
-<button onclick="addInvitedGuest('${name}')">
-Add Guest
-</button>
-`;
+    document.getElementById("guestSearchResult").innerHTML=`
+    <div style="color:green;font-weight:bold">
+    Guest Confirmed For Event
+    </div>
+
+    <button onclick="addConfirmedGuest('${name}','${data.familyId}')">
+    Add Guest
+    </button>
+    `;
+
+  }
+
+  // 🟠 INVITED BUT DECLINED
+  else if(data.status === "DECLINED"){
+
+    document.getElementById("guestSearchResult").innerHTML=`
+    <div style="color:#ed6c02;font-weight:bold">
+    Guest Declined Invitation
+    </div>
+
+    <button onclick="addDeclinedGuest('${name}','${data.familyId}')">
+    Request Approval
+    </button>
+    `;
+
+  }
+
+  // 🟡 INVITED BUT NO RESPONSE
+  else if(data.status === "INVITED_NO_RESPONSE"){
+
+    document.getElementById("guestSearchResult").innerHTML=`
+    <div style="color:#f9a825;font-weight:bold">
+    Invited Guest Without RSVP
+    </div>
+
+    <button onclick="addNoResponseGuest('${name}','${data.familyId}')">
+    Request Approval
+    </button>
+    `;
+
+  }
 
 }else{
 
-document.getElementById("guestSearchResult").innerHTML=`
-<div style="color:#c62828;font-weight:bold">
-Guest Not Found In RSVP
-</div>
+  // 🔴 COMPLETELY UNKNOWN GUEST
 
-<button onclick="addNewGuest('${name}')">
-Send Approval Request
-</button>
-`;
+  document.getElementById("guestSearchResult").innerHTML=`
+  <div style="color:#c62828;font-weight:bold">
+  Guest Not Found
+  </div>
+
+  <button onclick="addNewGuest('${name}')">
+  Send Approval Request
+  </button>
+  `;
 }
 
 }
 
-function addInvitedGuest(name){
+function addConfirmedGuest(name,familyId){
 
 extraGuestsList.push({
-name:name,
-approved:true
+  name:name,
+  familyId:familyId,
+  type:"CONFIRMED"
 });
 
-renderExtraGuests();
+closeGuestModal();
+
+alert(name + " added as confirmed guest.");
+
+}
+
+function addDeclinedGuest(name,familyId){
+
+extraGuestsList.push({
+  name:name,
+  familyId:familyId,
+  type:"DECLINED"
+});
 
 closeGuestModal();
+
+alert(name + " added as declined RSVP guest.");
+
+}
+
+function addNoResponseGuest(name,familyId){
+
+extraGuestsList.push({
+  name:name,
+  familyId:familyId,
+  type:"INVITED_NO_RESPONSE"
+});
+
+closeGuestModal();
+
+alert(name + " added as invited/no-response guest.");
 
 }
 
 function addNewGuest(name){
 
 extraGuestsList.push({
-name:name,
-approved:false
+  name:name,
+  familyId:"",
+  type:"NEW"
 });
-
-renderExtraGuests();
 
 closeGuestModal();
 
-}
-
-function renderExtraGuests(){
-
-let html="";
-
-extraGuestsList.forEach((g,i)=>{
-
-html += `
-<label class="member"
-style="
-background:${g.approved ? '#fff8e1' : '#fdecea'};
-border-radius:8px;
-">
-
-<span>
-${g.name}
-${g.approved ? '(Invited Extra)' : '(Approval Required)'}
-</span>
-
-<input
-type="checkbox"
-checked
-data-extra="true"
-data-approved="${g.approved}"
-id="x${i}"
->
-
-</label>
-`;
-
-});
-
-document.getElementById("familyCard").innerHTML += html;
+alert(name + " sent for approval.");
 
 }
   
