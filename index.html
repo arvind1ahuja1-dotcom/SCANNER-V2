@@ -138,6 +138,12 @@ let familyCache = {};
 
 let extraGuests = [];
 
+let pendingGuests = [];
+
+let userRole = "";
+
+let clearedDecisionRows = [];
+
 const API_URL="https://script.google.com/macros/s/AKfycbwfBi1pESnwh8ZMSDPLATpjZHEMV3npR6146FfdMOSrbXvTlJ7f7g4ZmG1dojHulhY/exec";
 
 const SESSION_HOURS = 6;
@@ -213,6 +219,8 @@ return;
 }
 
 userName=data.name;
+
+userRole = data.role || "";
 
 /* SAVE SESSION */
 localStorage.setItem("scannerUser", userName);
@@ -772,19 +780,81 @@ alert(msg);
 
 }
 
-function openGuestPanel(){
+async function openGuestPanel(){
 
-let guestName = prompt("Enter Guest Name");
+let guestName = prompt("Enter Guest First Name");
 
 if(!guestName) return;
 
-guestName = guestName.trim();
+let familyName = prompt("Enter Guest Family Name");
 
-if(guestName==="") return;
+if(!familyName) return;
 
-extraGuests.push(guestName);
+let res = await fetch(
+API_URL +
+"?action=searchGuest" +
+"&name=" + encodeURIComponent(guestName) +
+"&family=" + encodeURIComponent(familyName) +
+"&func=" + activeFunction
+);
 
-alert("Guest Added: " + guestName);
+let data = await res.json();
+
+//
+// CASE 1 — RSVP CONFIRMED
+//
+
+if(data.found && data.declined === false){
+
+  extraGuests.push(
+    guestName + " " + familyName
+  );
+
+  alert("Confirmed Guest Added");
+
+  return;
+
+}
+
+//
+// CASE 2 — Declined / No RSVP
+//
+
+if(data.found && data.declined === true){
+
+  extraGuests.push(
+    guestName + " " + familyName
+  );
+
+  alert("Invited Guest Added");
+
+  return;
+
+}
+
+//
+// CASE 3 — Totally Unknown
+//
+
+await fetch(API_URL,{
+  method:"POST",
+  body:JSON.stringify({
+    action:"requestApproval",
+    func:activeFunction,
+    family:"",
+    guests:[{
+      name:guestName,
+      family:familyName
+    }],
+    device:userName
+  })
+});
+
+await loadPendingCount();
+
+alert("Approval Request Sent");
+
+resetScanner();
 
 }
 
