@@ -101,6 +101,24 @@ OKAY
 
 <h3 id="functionTitle"></h3>
 
+<div
+id="pendingCounter"
+onclick="openPendingPanel()"
+style="
+display:none;
+background:#c62828;
+color:white;
+padding:8px 16px;
+border-radius:999px;
+font-size:18px;
+font-weight:bold;
+width:max-content;
+margin:10px auto;
+cursor:pointer;
+">
+Pending : 0
+</div>
+  
 <div id="reader" style="width:320px;margin:auto;"></div>
 
 <div id="familyCard"></div>
@@ -118,12 +136,16 @@ let scannedFamilies = {};
 
 let familyCache = {};
 
+let extraGuests = [];
+
 const API_URL="https://script.google.com/macros/s/AKfycbwfBi1pESnwh8ZMSDPLATpjZHEMV3npR6146FfdMOSrbXvTlJ7f7g4ZmG1dojHulhY/exec";
 
 const SESSION_HOURS = 6;
 
 let userName="";
 let activeFunction="";
+
+let pendingInterval = null;
 
 window.onload = function(){
 
@@ -231,6 +253,16 @@ resetScanner();
 /* preload attendance log */
 await preloadAttendance();
 await preloadFamilies();
+
+await loadPendingCount();
+
+if(!pendingInterval){
+
+pendingInterval = setInterval(async ()=>{
+await loadPendingCount();
+},5000);
+
+}
 
 }
 
@@ -352,6 +384,7 @@ html+=`
 <div style="display:flex;justify-content:space-between;margin-top:25px">
 
 <button
+onclick="openGuestPanel()"
 style="
 background:#ed6c02;
 color:white;
@@ -387,7 +420,7 @@ async function submit(fid,fname){
 
 let boxes=document.querySelectorAll("input[type=checkbox]");
 
-let names=[];
+let names=[...extraGuests];
 let expected = 0;
 let arrivedExpected = 0;
 let extraGuests = 0;
@@ -463,6 +496,8 @@ if(extraGuests > 0){
   color = "#2e7d32";
 }
 
+extraGuests = [];
+  
 document.getElementById("familyCard").innerHTML = `
 
 <div style="
@@ -688,7 +723,70 @@ return false; // ✅ ALSO ADD THIS
 
 }
 
-  
+async function loadPendingCount(){
+
+try{
+
+let res = await fetch(API_URL+"?action=getPending&func="+activeFunction);
+
+let data = await res.json();
+
+let el = document.getElementById("pendingCounter");
+
+if(data.length > 0){
+
+el.style.display = "block";
+el.innerText = "Pending : " + data.length;
+
+}else{
+
+el.style.display = "none";
+
+}
+
+}catch(err){
+
+console.log(err);
+
+}
+
+}
+
+async function openPendingPanel(){
+
+let res = await fetch(API_URL+"?action=getPending&func="+activeFunction);
+
+let data = await res.json();
+
+if(data.length===0){
+alert("No pending guests");
+return;
+}
+
+let msg = data.map(g=>
+g.name + " (" + g.family + ")"
+).join("\n");
+
+alert(msg);
+
+}
+
+function openGuestPanel(){
+
+let guestName = prompt("Enter Guest Name");
+
+if(!guestName) return;
+
+guestName = guestName.trim();
+
+if(guestName==="") return;
+
+extraGuests.push(guestName);
+
+alert("Guest Added: " + guestName);
+
+}
+
 </script>
 
 </body>
