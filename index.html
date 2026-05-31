@@ -423,7 +423,7 @@ let boxes=document.querySelectorAll("input[type=checkbox]");
 let names=[...extraGuests];
 let expected = 0;
 let arrivedExpected = 0;
-let extraGuests = 0;
+let extraGuestCount = 0;
 
 boxes.forEach(b=>{
 
@@ -442,7 +442,7 @@ boxes.forEach(b=>{
     if(isExpected){
       arrivedExpected++;
     }else{
-      extraGuests++;
+      extraGuestCount++;
     }
   }
 
@@ -466,7 +466,7 @@ let payload={
   familyName:fname,
   registered: expected,
   arrived: arrivedExpected,
-  extra: extraGuests,
+  extra: extraGuestCount,
   names:names.join(", "),
   device:userName,
   method:"QR Scan"
@@ -488,7 +488,7 @@ lastScanned = fid;
 
 let color;
 
-if(extraGuests > 0){
+if(extraGuestCount > 0){
   color = "#800020";
 }else if(arrivedExpected < expected){
   color = "#ed6c02";
@@ -523,8 +523,8 @@ ${names.join(", ")}
 
 <div style="font-size:20px;margin-bottom:25px;font-weight:bold;">
 ${
-  extraGuests > 0
-    ? `⚠ ${extraGuests} Unregistered Guest${extraGuests>1?"s":""}`
+  extraGuestCount > 0
+    ? `⚠ ${extraGuests} Unregistered Guest${extraGuestCount>1?"s":""}`
     : (arrivedExpected < expected
         ? `⚠ ${expected - arrivedExpected} Guest Missing`
         : `All Registered Guests Present`)
@@ -640,6 +640,7 @@ setTimeout(()=>{
 msg.remove();
 scanLock=false;
 lastScanned = "";
+extraGuests = [];
 },5000);
 
 }
