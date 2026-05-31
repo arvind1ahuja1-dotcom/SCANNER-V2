@@ -101,14 +101,77 @@ OKAY
 
 <h3 id="functionTitle"></h3>
 
+<div id="hostControls" style="display:none;">
+
+  <div 
+    id="pendingCounter"
+    onclick="openApprovalPanel()"
+    style="
+      font-size:18px;
+      color:white;
+      background:#c62828;
+      display:inline-block;
+      padding:8px 14px;
+      border-radius:20px;
+      cursor:pointer;
+      margin-bottom:10px
+    ">
+  </div>
+
+</div>
+
 <div id="reader" style="width:320px;margin:auto;"></div>
 
 <div id="familyCard"></div>
+
+<div id="pinModal" style="
+display:none;
+position:fixed;
+top:0;left:0;right:0;bottom:0;
+background:rgba(0,0,0,0.6);
+z-index:9999;
+justify-content:center;
+align-items:center;
+">
+
+<div style="
+background:white;
+padding:20px;
+border-radius:10px;
+width:300px;
+text-align:center;
+">
+
+<h3>Enter Host PIN</h3>
+
+<div id="pinGuestInfo" style="margin-bottom:10px;font-size:14px;color:#555"></div>
+
+<input id="hostPinInput"
+type="tel"
+inputmode="numeric"
+maxlength="6"
+placeholder="Enter 6-digit PIN"
+style="width:90%;padding:10px;font-size:20px;text-align:center">
+
+<br><br>
+
+<button onclick="submitHostPin()" style="background:#2e7d32;color:white">
+Submit
+</button>
+
+<button onclick="closePinModal()" style="background:#ccc">
+Cancel
+</button>
+
+</div>
+</div>
 
 </div>
 
 
 <script>
+
+let pendingInterval = null;
 
 let lastScanned = "";
 
@@ -124,6 +187,11 @@ const SESSION_HOURS = 6;
 
 let userName="";
 let activeFunction="";
+let userRole="";
+
+let currentFamilyId="";
+let currentFamilyName="";
+let approvedExtraGuests=[];
 
 window.onload = function(){
 
@@ -137,6 +205,7 @@ let diff = (Date.now() - time) / 3600000;
 if(diff < SESSION_HOURS){
 
 userName = user;
+userRole = localStorage.getItem("scannerRole") || "";
 
 document.getElementById("login").style.display="none";
 document.getElementById("scanner").style.display="block";
@@ -192,6 +261,9 @@ return;
 
 userName=data.name;
 
+userRole = data.role;
+localStorage.setItem("scannerRole", userRole);
+
 /* SAVE SESSION */
 localStorage.setItem("scannerUser", userName);
 localStorage.setItem("loginTime", Date.now());
@@ -226,12 +298,23 @@ activeFunction=data.id;
 
 document.getElementById("functionTitle").innerText=data.name;
 
+if(userRole === "HOST"){
+  document.getElementById("hostControls").style.display="block";
+}
+
 resetScanner();
 
 /* preload attendance log */
 await preloadAttendance();
 await preloadFamilies();
+await loadPendingCount();
 
+if(!pendingInterval){
+  pendingInterval = setInterval(async ()=>{
+    await loadPendingCount();
+  }, 5000);
+}
+  
 }
 
 let scanLock=false;
@@ -352,6 +435,7 @@ html+=`
 <div style="display:flex;justify-content:space-between;margin-top:25px">
 
 <button
+onclick="openGuestPanel()"
 style="
 background:#ed6c02;
 color:white;
@@ -385,9 +469,17 @@ document.getElementById("familyCard").innerHTML=html;
   
 async function submit(fid,fname){
 
+currentFamilyId = fid;
+currentFamilyName = fname;
+
+let isPostPinFlow = approvedExtraGuests.length > 0;
+
 let boxes=document.querySelectorAll("input[type=checkbox]");
 
-let names=[];
+let names=[];                 // ALL selected
+let approvedNames=[];         // ONLY expected guests
+let pendingGuests=[];         // NEED approval
+
 let expected = 0;
 let arrivedExpected = 0;
 let extraGuests = 0;
@@ -404,13 +496,17 @@ boxes.forEach(b=>{
   }
 
   if(b.checked){
+
     names.push(name);
 
     if(isExpected){
       arrivedExpected++;
+      approvedNames.push(name);
     }else{
       extraGuests++;
+      pendingGuests.push(name);
     }
+
   }
 
 });
@@ -421,6 +517,42 @@ if(names.length === 0){
 }
 
 let primaryName = window.currentPrimaryName || "";
+
+if(isPostPinFlow){
+  pendingGuests = [];
+}
+
+// 🔴 HANDLE EXTRA GUESTS (PIN OR PENDING)
+
+if(pendingGuests.length > 0 && !isPostPinFlow){
+
+  let proceed = confirm(
+    "Unregistered Guest(s):\n\n" +
+    pendingGuests.join(", ") + " (" + fname + ")" +
+    "\n\nOK = Enter PIN\nCancel = Send for Approval"
+  );
+
+  if(proceed){
+    openPinModal(pendingGuests,fname);
+    return; // wait for PIN
+  }
+
+  // Send ALL to pending (no PIN used)
+  await fetch(API_URL,{
+    method:"POST",
+    body: JSON.stringify({
+      action:"requestApproval",
+      func:activeFunction,
+      family:fid,
+      familyName:fname,
+      guests:pendingGuests,
+      device:userName
+    })
+  });
+
+await loadPendingCount();
+
+}
 
 //
 // ✅ CLEAN PAYLOAD (NO EXTRA CODE INSIDE)
@@ -433,8 +565,8 @@ let payload={
   familyName:fname,
   registered: expected,
   arrived: arrivedExpected,
-  extra: extraGuests,
-  names:names.join(", "),
+  extra: approvedExtraGuests.length,
+  names:approvedNames.concat(approvedExtraGuests).join(", "),
   device:userName,
   method:"QR Scan"
 };
@@ -447,6 +579,9 @@ fetch(API_URL,{
   body:JSON.stringify(payload)
 }).catch(err => console.log("Write failed", err));
 
+/* ✅ ADD THIS LINE RIGHT HERE */
+await loadPendingCount();
+
 /* update local attendance cache */
 scannedFamilies[fid]=names.join(", ");
 
@@ -455,7 +590,7 @@ lastScanned = fid;
 
 let color;
 
-if(extraGuests > 0){
+if(pendingGuests.length > 0){
   color = "#800020";
 }else if(arrivedExpected < expected){
   color = "#ed6c02";
@@ -688,8 +823,190 @@ return false; // ✅ ALSO ADD THIS
 
 }
 
-  
+async function loadPendingCount(){
+
+  let res = await fetch(API_URL+"?action=getPending&func="+activeFunction);
+  let data = await res.json();
+
+  document.getElementById("pendingCounter").innerText =
+  data.length > 0 ? "Pending 🔴 " + data.length : "No Pending";
+
+}
+
+let pendingData = [];
+
+async function openApprovalPanel(){
+
+  document.getElementById("approvalPanel").style.display="block";
+
+  let res = await fetch(API_URL+"?action=getPending&func="+activeFunction);
+  let data = await res.json();
+
+  pendingData = data;
+
+  let html="";
+
+  data.forEach(g=>{
+    html += `
+    <div style="margin:10px;font-size:18px">
+      <input type="checkbox" value="${g.row}">
+      ${g.name} (${g.family})
+    </div>`;
+  });
+
+  document.getElementById("approvalList").innerHTML = html;
+}
+
+function closeApprovalPanel(){
+  document.getElementById("approvalPanel").style.display="none";
+}
+
+function getSelectedRows(){
+  return [...document.querySelectorAll("#approvalList input:checked")]
+    .map(x=>parseInt(x.value));
+}
+
+let approvalAction = "";
+let approvalRows = [];
+
+function openPinModalForApproval(rows, action){
+  approvalRows = rows;
+  approvalAction = action;
+
+  document.getElementById("pinGuestInfo").innerText =
+    "Approve / Reject Selected Guests";
+
+  document.getElementById("pinModal").style.display = "flex";
+}
+
+async function approveSelected(){
+
+  let rows = getSelectedRows();
+
+  if(rows.length === 0){
+    alert("Select at least one");
+    return;
+  }
+
+  openPinModalForApproval(rows, "approve");
+}
+
+async function rejectSelected(){
+
+  let rows = getSelectedRows();
+
+  if(rows.length === 0){
+    alert("Select at least one");
+    return;
+  }
+
+  openPinModalForApproval(rows, "reject");
+}
+
+let pendingGuestsGlobal = [];
+let pendingFamilyGlobal = "";
+
+function openPinModal(guests,familyName){
+  pendingGuestsGlobal = guests;
+  pendingFamilyGlobal = familyName;
+
+  document.getElementById("pinGuestInfo").innerText =
+    guests.join(", ") + " (" + familyName + ")";
+
+  document.getElementById("hostPinInput").value = "";
+  document.getElementById("pinModal").style.display = "flex";
+}
+
+function closePinModal(){
+  document.getElementById("pinModal").style.display = "none";
+}
+
+async function submitHostPin(){
+
+  let pin = document.getElementById("hostPinInput").value;
+
+  if(pin.length !== 6){
+    alert("Enter valid 6-digit PIN");
+    return;
+  }
+
+  let res = await fetch(API_URL+"?action=verifyHostPin&pin="+pin);
+  let data = await res.json();
+
+  if(data.success){
+
+  closePinModal();
+
+  // 🔴 APPROVAL FLOW
+  if(approvalRows.length > 0){
+
+    await fetch(API_URL,{
+      method:"POST",
+      body: JSON.stringify({
+        action: approvalAction === "approve" ? "approveGuest" : "rejectGuest",
+        rows: approvalRows,
+        host: data.name
+      })
+    });
+
+    approvalRows = [];
+    approvalAction = "";
+
+closeApprovalPanel();
+    
+    await openApprovalPanel();
+    await loadPendingCount();
+
+    return;
+  }
+
+  // 🟢 NORMAL FLOW
+  await finalizeSubmissionAfterPin();
+}else{
+    alert("Invalid PIN");
+  }
+
+}
+
+async function finalizeSubmissionAfterPin(){
+
+  approvedExtraGuests = pendingGuestsGlobal;
+
+  // continue submission WITHOUT resetting state
+  await submit(currentFamilyId, currentFamilyName);
+
+}
+
+function proceedSubmitAfterPin(){
+  submit(currentFamilyId,currentFamilyName);
+}
+
 </script>
 
+<div id="approvalPanel" style="
+display:none;
+position:fixed;
+top:0;left:0;right:0;bottom:0;
+background:white;
+z-index:9999;
+overflow:auto;
+padding:20px;
+">
+
+<h2>Pending Approvals</h2>
+
+<div id="approvalList"></div>
+
+<br>
+
+<button onclick="approveSelected()" style="background:#2e7d32;color:white">Approve</button>
+<button onclick="rejectSelected()" style="background:#c62828;color:white">Reject</button>
+
+<br><br>
+
+<button onclick="closeApprovalPanel()">Close</button>
+
+</div>
+  
 </body>
 </html>
