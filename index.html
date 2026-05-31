@@ -1111,12 +1111,42 @@ async function openApprovalPanel(){
   let html="";
 
   data.forEach(g=>{
-    html += `
-    <div style="margin:10px;font-size:18px">
-      <input type="checkbox" value="${g.row}">
-      ${g.name} (${g.family})
-    </div>`;
-  });
+
+  let color = "#000";
+
+  if(g.status == "Approved"){
+    color = "#2e7d32";
+  }
+
+  if(g.status == "Rejected"){
+    color = "#c62828";
+  }
+
+  html += `
+  <div style="
+    margin:10px;
+    font-size:18px;
+    color:${color};
+    border:1px solid #ccc;
+    padding:10px;
+    border-radius:8px
+  ">
+
+  ${
+    userRole === "HOST" &&
+    g.status.startsWith("Pending")
+      ? `<input type="checkbox" value="${g.row}">`
+      : ``
+  }
+
+  ${g.name} (${g.family})
+
+  <div style="font-size:14px;margin-top:5px">
+    ${g.status}
+  </div>
+
+  </div>`;
+});
 
   document.getElementById("approvalList").innerHTML = html;
 }
