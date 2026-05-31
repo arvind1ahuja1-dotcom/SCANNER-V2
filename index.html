@@ -101,24 +101,6 @@ OKAY
 
 <h3 id="functionTitle"></h3>
 
-<div
-id="pendingCounter"
-onclick="openPendingPanel()"
-style="
-display:none;
-background:#c62828;
-color:white;
-padding:8px 16px;
-border-radius:999px;
-font-size:18px;
-font-weight:bold;
-width:max-content;
-margin:10px auto;
-cursor:pointer;
-">
-Pending : 0
-</div>
-  
 <div id="reader" style="width:320px;margin:auto;"></div>
 
 <div id="familyCard"></div>
@@ -136,22 +118,12 @@ let scannedFamilies = {};
 
 let familyCache = {};
 
-let extraGuests = [];
-
-let pendingGuests = [];
-
-let userRole = "";
-
-let clearedDecisionRows = [];
-
 const API_URL="https://script.google.com/macros/s/AKfycbwfBi1pESnwh8ZMSDPLATpjZHEMV3npR6146FfdMOSrbXvTlJ7f7g4ZmG1dojHulhY/exec";
 
 const SESSION_HOURS = 6;
 
 let userName="";
 let activeFunction="";
-
-let pendingInterval = null;
 
 window.onload = function(){
 
@@ -220,8 +192,6 @@ return;
 
 userName=data.name;
 
-userRole = data.role || "";
-
 /* SAVE SESSION */
 localStorage.setItem("scannerUser", userName);
 localStorage.setItem("loginTime", Date.now());
@@ -261,16 +231,6 @@ resetScanner();
 /* preload attendance log */
 await preloadAttendance();
 await preloadFamilies();
-
-await loadPendingCount();
-
-if(!pendingInterval){
-
-pendingInterval = setInterval(async ()=>{
-await loadPendingCount();
-},5000);
-
-}
 
 }
 
@@ -392,7 +352,6 @@ html+=`
 <div style="display:flex;justify-content:space-between;margin-top:25px">
 
 <button
-onclick="openGuestPanel()"
 style="
 background:#ed6c02;
 color:white;
@@ -428,10 +387,10 @@ async function submit(fid,fname){
 
 let boxes=document.querySelectorAll("input[type=checkbox]");
 
-let names=[...extraGuests];
+let names=[];
 let expected = 0;
 let arrivedExpected = 0;
-let extraGuestCount = 0;
+let extraGuests = 0;
 
 boxes.forEach(b=>{
 
@@ -450,7 +409,7 @@ boxes.forEach(b=>{
     if(isExpected){
       arrivedExpected++;
     }else{
-      extraGuestCount++;
+      extraGuests++;
     }
   }
 
@@ -474,7 +433,7 @@ let payload={
   familyName:fname,
   registered: expected,
   arrived: arrivedExpected,
-  extra: extraGuestCount,
+  extra: extraGuests,
   names:names.join(", "),
   device:userName,
   method:"QR Scan"
@@ -496,7 +455,7 @@ lastScanned = fid;
 
 let color;
 
-if(extraGuestCount > 0){
+if(extraGuests > 0){
   color = "#800020";
 }else if(arrivedExpected < expected){
   color = "#ed6c02";
@@ -504,8 +463,6 @@ if(extraGuestCount > 0){
   color = "#2e7d32";
 }
 
-extraGuests = [];
-  
 document.getElementById("familyCard").innerHTML = `
 
 <div style="
@@ -531,8 +488,8 @@ ${names.join(", ")}
 
 <div style="font-size:20px;margin-bottom:25px;font-weight:bold;">
 ${
-  extraGuestCount > 0
-    ? `⚠ ${extraGuests} Unregistered Guest${extraGuestCount>1?"s":""}`
+  extraGuests > 0
+    ? `⚠ ${extraGuests} Unregistered Guest${extraGuests>1?"s":""}`
     : (arrivedExpected < expected
         ? `⚠ ${expected - arrivedExpected} Guest Missing`
         : `All Registered Guests Present`)
@@ -648,7 +605,6 @@ setTimeout(()=>{
 msg.remove();
 scanLock=false;
 lastScanned = "";
-extraGuests = [];
 },5000);
 
 }
@@ -732,132 +688,7 @@ return false; // ✅ ALSO ADD THIS
 
 }
 
-async function loadPendingCount(){
-
-try{
-
-let res = await fetch(API_URL+"?action=getPending&func="+activeFunction);
-
-let data = await res.json();
-
-let el = document.getElementById("pendingCounter");
-
-if(data.length > 0){
-
-el.style.display = "block";
-el.innerText = "Pending : " + data.length;
-
-}else{
-
-el.style.display = "none";
-
-}
-
-}catch(err){
-
-console.log(err);
-
-}
-
-}
-
-async function openPendingPanel(){
-
-let res = await fetch(API_URL+"?action=getPending&func="+activeFunction);
-
-let data = await res.json();
-
-if(data.length===0){
-alert("No pending guests");
-return;
-}
-
-let msg = data.map(g=>
-g.name + " (" + g.family + ")"
-).join("\n");
-
-alert(msg);
-
-}
-
-async function openGuestPanel(){
-
-let guestName = prompt("Enter Guest First Name");
-
-if(!guestName) return;
-
-let familyName = prompt("Enter Guest Family Name");
-
-if(!familyName) return;
-
-let res = await fetch(
-API_URL +
-"?action=searchGuest" +
-"&name=" + encodeURIComponent(guestName) +
-"&family=" + encodeURIComponent(familyName) +
-"&func=" + activeFunction
-);
-
-let data = await res.json();
-
-//
-// CASE 1 — RSVP CONFIRMED
-//
-
-if(data.found && data.declined === false){
-
-  extraGuests.push(
-    guestName + " " + familyName
-  );
-
-  alert("Confirmed Guest Added");
-
-  return;
-
-}
-
-//
-// CASE 2 — Declined / No RSVP
-//
-
-if(data.found && data.declined === true){
-
-  extraGuests.push(
-    guestName + " " + familyName
-  );
-
-  alert("Invited Guest Added");
-
-  return;
-
-}
-
-//
-// CASE 3 — Totally Unknown
-//
-
-await fetch(API_URL,{
-  method:"POST",
-  body:JSON.stringify({
-    action:"requestApproval",
-    func:activeFunction,
-    family:"",
-    guests:[{
-      name:guestName,
-      family:familyName
-    }],
-    device:userName
-  })
-});
-
-await loadPendingCount();
-
-alert("Approval Request Sent");
-
-resetScanner();
-
-}
-
+  
 </script>
 
 </body>
