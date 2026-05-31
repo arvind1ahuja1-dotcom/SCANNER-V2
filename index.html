@@ -557,17 +557,11 @@ boxes.forEach(b=>{
 
     if(isExpected){
       arrivedExpected++;
-      approvedNames.push(name);
     }
 
-  }
+}
 
 });
-
-// ✅ NEW EXTRA GUEST LOGIC
-
-let pendingGuests = [];
-let extraGuests = 0;
 
 // ✅ PROCESS EXTRA GUESTS
 
@@ -1097,12 +1091,8 @@ let pendingData = [];
 
 function handlePendingClick(){
 
-  // ONLY HOST can open approvals
-  if(userRole !== "HOST"){
-    return;
-  }
-
   openApprovalPanel();
+
 }
   
 async function openApprovalPanel(){
