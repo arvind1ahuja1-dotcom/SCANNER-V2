@@ -530,10 +530,15 @@ let isPostPinFlow = approvedExtraGuests.length > 0;
 
 let boxes=document.querySelectorAll("input[type=checkbox]");
 
-let names=[];                 // ALL selected
-let approvedNames=[];         // ONLY expected guests
+let qrGuestNames = [];
+
+let invitedExtraGuests = [];
+
+let pendingGuests = [];
+
 let expected = 0;
 let arrivedExpected = 0;
+let extraGuests = 0;
 
 boxes.forEach(b=>{
 
@@ -548,7 +553,7 @@ boxes.forEach(b=>{
 
   if(b.checked){
 
-    names.push(name);
+    qrGuestNames.push(name);
 
     if(isExpected){
       arrivedExpected++;
@@ -564,33 +569,33 @@ boxes.forEach(b=>{
 let pendingGuests = [];
 let extraGuests = 0;
 
+// ✅ PROCESS EXTRA GUESTS
+
 extraGuestsList.forEach(g=>{
 
   extraGuests++;
 
-  // CONFIRMED RSVP guest
-  if(g.type === "CONFIRMED"){
-    approvedNames.push(g.name);
+  // invited guests
+  if(
+    g.type === "CONFIRMED" ||
+    g.type === "DECLINED" ||
+    g.type === "INVITED_NO_RESPONSE"
+  ){
+
+    invitedExtraGuests.push(g.name);
+
   }
 
-  // DECLINED RSVP guest
-  else if(g.type === "DECLINED"){
-    approvedNames.push(g.name);
-  }
-
-  // INVITED but NO RESPONSE
-  else if(g.type === "INVITED_NO_RESPONSE"){
-    approvedNames.push(g.name);
-  }
-
-  // COMPLETELY NEW guest
+  // completely new guests
   else if(g.type === "NEW"){
+
     pendingGuests.push(g.name);
+
   }
 
 });
 
-if(names.length === 0 && extraGuestsList.length === 0){
+if(qrGuestNames.length === 0 && extraGuestsList.length === 0){
   alert("Please select at least one guest.");
   return;
 }
@@ -645,7 +650,11 @@ let payload={
   registered: expected,
   arrived: arrivedExpected,
   extra: extraGuests,
-  names:approvedNames.concat(approvedExtraGuests).join(", "),
+  names:
+qrGuestNames
+.concat(invitedExtraGuests)
+.concat(approvedExtraGuests)
+.join(", "),
   device:userName,
   method:"QR Scan"
 };
@@ -662,7 +671,10 @@ fetch(API_URL,{
 await loadPendingCount();
 
 /* update local attendance cache */
-scannedFamilies[fid]=names.join(", ");
+scannedFamilies[fid]=qrGuestNames
+.concat(invitedExtraGuests)
+.concat(approvedExtraGuests)
+.join(", ");
 
 /* prevent same QR from firing again */
 lastScanned = fid;
@@ -698,7 +710,12 @@ ${primaryName} ${fname} Family
 </div>
 
 <div style="font-size:22px;margin-bottom:20px">
-${names.join(", ")}
+${
+qrGuestNames
+.concat(invitedExtraGuests)
+.concat(approvedExtraGuests)
+.join(", ")
+}
 </div>
 
 <div style="font-size:20px;margin-bottom:25px;font-weight:bold;">
@@ -912,6 +929,10 @@ try{ scannerInstance.clear(); }catch(e){}
 /* reset scan guards */
 scanLock = false;
 lastScanned = "";
+
+/* reset extra guest state */
+extraGuestsList = [];
+approvedExtraGuests = [];
 
 document.getElementById("reader").style.height="320px";
   
