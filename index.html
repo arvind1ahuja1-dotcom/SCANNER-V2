@@ -298,7 +298,9 @@ activeFunction=data.id;
 
 document.getElementById("functionTitle").innerText=data.name;
 
-document.getElementById("hostControls").style.display="block";
+if(userRole === "HOST"){
+  document.getElementById("hostControls").style.display="block";
+}
 
 resetScanner();
 
