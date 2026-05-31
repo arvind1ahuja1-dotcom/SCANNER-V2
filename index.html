@@ -124,6 +124,57 @@ OKAY
 
 <div id="familyCard"></div>
 
+<div id="guestModal" style="
+display:none;
+position:fixed;
+top:0;left:0;right:0;bottom:0;
+background:rgba(0,0,0,0.6);
+z-index:9999;
+justify-content:center;
+align-items:center;
+">
+
+<div style="
+background:white;
+padding:20px;
+border-radius:12px;
+width:320px;
+text-align:center;
+">
+
+<h3>Add Extra Guest</h3>
+
+<input
+id="guestName"
+placeholder="Guest Name"
+style="width:90%;padding:10px;font-size:18px;margin-bottom:10px"
+>
+
+<input
+id="guestFamily"
+placeholder="Family Name"
+style="width:90%;padding:10px;font-size:18px;margin-bottom:10px"
+>
+
+<button
+onclick="searchGuest()"
+style="background:#2e7d32;color:white"
+>
+Search Guest
+</button>
+
+<button
+onclick="closeGuestModal()"
+style="background:#999;color:white"
+>
+Cancel
+</button>
+
+<div id="guestSearchResult" style="margin-top:15px"></div>
+
+</div>
+</div>
+  
 <div id="pinModal" style="
 display:none;
 position:fixed;
@@ -192,6 +243,9 @@ let userRole="";
 let currentFamilyId="";
 let currentFamilyName="";
 let approvedExtraGuests=[];
+
+let extraGuestsList = [];
+let lastApprovalCheck = "";
 
 window.onload = function(){
 
@@ -650,6 +704,133 @@ SCAN NEXT GUEST
 
 }
 
+function openGuestModal(){
+
+document.getElementById("guestModal").style.display="flex";
+
+document.getElementById("guestName").value="";
+document.getElementById("guestFamily").value="";
+document.getElementById("guestSearchResult").innerHTML="";
+
+}
+
+function closeGuestModal(){
+
+document.getElementById("guestModal").style.display="none";
+
+}
+
+async function searchGuest(){
+
+let name =
+document.getElementById("guestName").value.trim();
+
+let family =
+document.getElementById("guestFamily").value.trim();
+
+if(!name || !family){
+alert("Enter guest name and family");
+return;
+}
+
+let res = await fetch(
+API_URL+
+"?action=searchGuest"+
+"&name="+encodeURIComponent(name)+
+"&family="+encodeURIComponent(family)+
+"&func="+activeFunction
+);
+
+let data = await res.json();
+
+if(data.found){
+
+document.getElementById("guestSearchResult").innerHTML=`
+<div style="color:green;font-weight:bold">
+Invited Guest Found
+</div>
+
+<button onclick="addInvitedGuest('${name}')">
+Add Guest
+</button>
+`;
+
+}else{
+
+document.getElementById("guestSearchResult").innerHTML=`
+<div style="color:#c62828;font-weight:bold">
+Guest Not Found In RSVP
+</div>
+
+<button onclick="addNewGuest('${name}')">
+Send Approval Request
+</button>
+`;
+}
+
+}
+
+function addInvitedGuest(name){
+
+extraGuestsList.push({
+name:name,
+approved:true
+});
+
+renderExtraGuests();
+
+closeGuestModal();
+
+}
+
+function addNewGuest(name){
+
+extraGuestsList.push({
+name:name,
+approved:false
+});
+
+renderExtraGuests();
+
+closeGuestModal();
+
+}
+
+function renderExtraGuests(){
+
+let html="";
+
+extraGuestsList.forEach((g,i)=>{
+
+html += `
+<label class="member"
+style="
+background:${g.approved ? '#fff8e1' : '#fdecea'};
+border-radius:8px;
+">
+
+<span>
+${g.name}
+${g.approved ? '(Invited Extra)' : '(Approval Required)'}
+</span>
+
+<input
+type="checkbox"
+checked
+data-extra="true"
+data-approved="${g.approved}"
+id="x${i}"
+>
+
+</label>
+`;
+
+});
+
+document.getElementById("familyCard").innerHTML += html;
+
+}
+  
 function collapseCamera(){
 
 if(scannerInstance){
@@ -985,6 +1166,7 @@ async function finalizeSubmissionAfterPin(){
   // continue submission WITHOUT resetting state
   await submit(currentFamilyId, currentFamilyName);
 
+  approvedExtraGuests = [];
 }
 
 function proceedSubmitAfterPin(){
