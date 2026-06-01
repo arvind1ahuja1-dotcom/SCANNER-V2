@@ -992,6 +992,13 @@ async function sendToHostApproval(){
 
   closePinModal();
 
+  /* MARK FAMILY AS ALREADY PROCESSED */
+scannedFamilies[currentFamilyId] =
+  pendingGuestsGlobal.join(", ");
+
+/* PREVENT SAME QR IMMEDIATE RE-SCAN */
+lastScanned = currentFamilyId;
+
   scannedFamilies[currentFamilyId] = pendingGuestsGlobal.join(", ");
 
   await loadPendingCount();
