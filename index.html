@@ -604,15 +604,7 @@ let payload = {
   method:"QR Scan"
 };
 
-// RSVP-NO GUESTS REQUIRE APPROVAL
-if(pendingGuests.length > 0){
 
-  pendingGuestsGlobal = pendingGuests;
-  pendingFamilyGlobal = fname;
-
-  openPinModal(pendingGuests, fname);
-
-}
   
 /* WRITE ATTENDANCE */
 let res = await fetch(API_URL,{
@@ -621,6 +613,16 @@ let res = await fetch(API_URL,{
 });
 
 let result = await res.json();
+
+// NOW OPEN RSVP-NO APPROVAL MODAL
+if(pendingGuests.length > 0){
+
+  pendingGuestsGlobal = pendingGuests;
+  pendingFamilyGlobal = fname;
+
+  openPinModal(pendingGuests, fname);
+
+}
 
 // SEND RSVP-NO GUESTS FOR HOST APPROVAL
 if(pendingGuests.length > 0){
