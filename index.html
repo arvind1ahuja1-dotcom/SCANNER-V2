@@ -587,15 +587,6 @@ if(names.length === 0){
 }
 
 /* NEED HOST APPROVAL */
-if(pendingGuests.length > 0){
-
-  pendingGuestsGlobal = pendingGuests;
-  pendingFamilyGlobal = fname;
-
-  openPinModal(pendingGuests, fname);
-
-  return;
-}
 
 let primaryName = window.currentPrimaryName || "";
 
@@ -608,11 +599,21 @@ let payload = {
   registered:expected,
   arrived:arrivedExpected,
   extra:approvedOverrides.length,
-  names:names.join(", "),
+  names:approvedNames.join(", "),
   device:userName,
   method:"QR Scan"
 };
 
+// RSVP-NO GUESTS REQUIRE APPROVAL
+if(pendingGuests.length > 0){
+
+  pendingGuestsGlobal = pendingGuests;
+  pendingFamilyGlobal = fname;
+
+  openPinModal(pendingGuests, fname);
+
+}
+  
 /* WRITE ATTENDANCE */
 let res = await fetch(API_URL,{
   method:"POST",
@@ -620,6 +621,24 @@ let res = await fetch(API_URL,{
 });
 
 let result = await res.json();
+
+// SEND RSVP-NO GUESTS FOR HOST APPROVAL
+if(pendingGuests.length > 0){
+
+  await fetch(API_URL,{
+    method:"POST",
+    body: JSON.stringify({
+      action:"requestApproval",
+      func:activeFunction,
+      family:fid,
+      familyName:fname,
+      guests:pendingGuests,
+      device:userName
+    })
+  });
+
+  await loadPendingCount();
+}
 
 /* DUPLICATE SAFETY */
 if(result.duplicate){
