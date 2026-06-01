@@ -339,7 +339,10 @@ lastScanned = familyId;
 
 /* invalid QR check */
 
-if(!familyId.startsWith("FAM")){
+if(
+  !familyId.startsWith("FAM") &&
+  !familyId.startsWith("BAM")
+){
 showInvalidQR();
 scanLock=false;
 return;
@@ -527,17 +530,18 @@ if(isPostPinFlow){
 if(pendingGuests.length > 0 && !isPostPinFlow){
 
   let proceed = confirm(
-    "Unregistered Guest(s):\n\n" +
-    pendingGuests.join(", ") + " (" + fname + ")" +
-    "\n\nOK = Enter PIN\nCancel = Send for Approval"
+    "These guests were NOT RSVP confirmed.\n\n" +
+    pendingGuests.join(", ") +
+    "\n\nOK = HOST PIN APPROVAL\nCancel = Send To Pending Approval"
   );
 
+  // HOST PIN FLOW
   if(proceed){
     openPinModal(pendingGuests,fname);
-    return; // wait for PIN
+    return;
   }
 
-  // Send ALL to pending (no PIN used)
+  // SEND TO PENDING APPROVAL
   await fetch(API_URL,{
     method:"POST",
     body: JSON.stringify({
@@ -550,8 +554,49 @@ if(pendingGuests.length > 0 && !isPostPinFlow){
     })
   });
 
-await loadPendingCount();
+  await loadPendingCount();
 
+  // 🚨 VERY IMPORTANT
+  // STOP attendance write completely
+  document.getElementById("familyCard").innerHTML = `
+  <div style="
+    background:#800020;
+    color:white;
+    padding:40px;
+    border-radius:12px;
+    margin-top:20px;
+    text-align:center;
+  ">
+
+    <h2>Approval Requested</h2>
+
+    <div style="font-size:22px;margin-top:20px">
+      ${pendingGuests.join(", ")}
+    </div>
+
+    <div style="margin-top:25px">
+      Waiting for HOST approval
+    </div>
+
+    <br>
+
+    <button
+      onclick="resetScanner()"
+      style="
+        font-size:22px;
+        padding:14px 28px;
+        background:white;
+        border:none;
+        border-radius:8px;
+        cursor:pointer;
+      ">
+      SCAN NEXT GUEST
+    </button>
+
+  </div>
+  `;
+
+  return;
 }
 
 //
