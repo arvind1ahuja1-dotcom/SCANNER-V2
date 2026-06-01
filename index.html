@@ -477,13 +477,11 @@ async function submit(fid,fname){
 currentFamilyId = fid;
 currentFamilyName = fname;
 
-let isPostPinFlow = approvedOverrides.length > 0;
+let boxes = document.querySelectorAll("input[type=checkbox]");
 
-let boxes=document.querySelectorAll("input[type=checkbox]");
-
-let names=[];                 // ALL selected
-let approvedNames=[];         // ONLY expected guests
-let pendingGuests=[];         // NEED approval
+let names = [];
+let approvedNames = [];
+let pendingGuests = [];
 
 let expected = 0;
 let arrivedExpected = 0;
@@ -494,7 +492,10 @@ boxes.forEach(b=>{
   let isExpected = b.dataset.expected === "true";
 
   let parent = b.closest(".member");
-  let name = parent ? parent.querySelector("span").innerText.trim() : "";
+
+  let name = parent
+    ? parent.querySelector("span").innerText.trim()
+    : "";
 
   if(isExpected){
     expected++;
@@ -502,31 +503,32 @@ boxes.forEach(b=>{
 
   if(b.checked){
 
-  names.push(name);
+    names.push(name);
 
-  // RSVP EXPECTED
-  if(isExpected){
-
-    arrivedExpected++;
-    approvedNames.push(name);
-
-  }else{
-
-    // HOST-APPROVED OVERRIDE
-    if(approvedOverrides.includes(name)){
+    // RSVP YES
+    if(isExpected){
 
       approvedNames.push(name);
+      arrivedExpected++;
 
     }else{
 
-      extraGuests++;
-      pendingGuests.push(name);
+      // HOST-APPROVED RSVP-NO
+      if(approvedOverrides.includes(name)){
+
+        approvedNames.push(name);
+        arrivedExpected++;
+
+      }else{
+
+        pendingGuests.push(name);
+        extraGuests++;
+
+      }
 
     }
 
   }
-
-}
 
 });
 
@@ -535,142 +537,66 @@ if(names.length === 0){
   return;
 }
 
-let primaryName = window.currentPrimaryName || "";
+/* NEED HOST APPROVAL */
+if(pendingGuests.length > 0){
 
-// 🔴 HANDLE EXTRA GUESTS (PIN OR PENDING)
+  pendingGuestsGlobal = pendingGuests;
+  pendingFamilyGlobal = fname;
 
-if(pendingGuests.length > 0 && !isPostPinFlow){
-
-  let proceed = confirm(
-    "These guests were NOT RSVP confirmed.\n\n" +
-    pendingGuests.join(", ") +
-    "\n\nOK = HOST PIN APPROVAL\nCancel = Send To Pending Approval"
-  );
-
-  // HOST PIN FLOW
-  if(proceed){
-    openPinModal(pendingGuests,fname);
-    return;
-  }
-
-  // SEND TO PENDING APPROVAL
-  await fetch(API_URL,{
-    method:"POST",
-    body: JSON.stringify({
-      action:"requestApproval",
-      func:activeFunction,
-      family:fid,
-      familyName:fname,
-      guests:pendingGuests,
-      device:userName
-    })
-  });
-
-  await loadPendingCount();
-
-// UNTICK pending guests to stop loop
-boxes.forEach(b=>{
-
-  let parent = b.closest(".member");
-  let name = parent
-    ? parent.querySelector("span").innerText.trim()
-    : "";
-
-  if(pendingGuests.includes(name)){
-    b.checked = false;
-  }
-
-});
-  
-  // 🚨 VERY IMPORTANT
-  // STOP attendance write completely
-  document.getElementById("familyCard").innerHTML = `
-  <div style="
-    background:#800020;
-    color:white;
-    padding:40px;
-    border-radius:12px;
-    margin-top:20px;
-    text-align:center;
-  ">
-
-    <h2>Approval Requested</h2>
-
-    <div style="font-size:22px;margin-top:20px">
-      ${pendingGuests.join(", ")}
-    </div>
-
-    <div style="margin-top:25px">
-      Waiting for HOST approval
-    </div>
-
-    <br>
-
-    <button
-      onclick="resetScanner()"
-      style="
-        font-size:22px;
-        padding:14px 28px;
-        background:white;
-        border:none;
-        border-radius:8px;
-        cursor:pointer;
-      ">
-      SCAN NEXT GUEST
-    </button>
-
-  </div>
-  `;
+  openPinModal(pendingGuests, fname);
 
   return;
 }
 
-//
-// ✅ CLEAN PAYLOAD (NO EXTRA CODE INSIDE)
-//
-let payload={
+let primaryName = window.currentPrimaryName || "";
+
+let payload = {
   action:"submit",
   func:activeFunction,
   family:fid,
-  primary: primaryName,
+  primary:primaryName,
   familyName:fname,
-  registered: expected,
-  arrived: arrivedExpected,
-  extra: approvedOverrides.length,
-  names:approvedNames.concat(approvedExtraGuests).join(", "),
+  registered:expected,
+  arrived:arrivedExpected,
+  extra:approvedOverrides.length,
+  names:approvedNames.join(", "),
   device:userName,
   method:"QR Scan"
 };
 
-//
-// ✅ FIRE AND FORGET (FAST)
-//
-fetch(API_URL,{
+/* WRITE ATTENDANCE */
+let res = await fetch(API_URL,{
   method:"POST",
   body:JSON.stringify(payload)
-}).catch(err => console.log("Write failed", err));
+});
 
-/* ✅ ADD THIS LINE RIGHT HERE */
-await loadPendingCount();
+let result = await res.json();
 
-/* update local attendance cache */
-scannedFamilies[fid]=names.join(", ");
+/* DUPLICATE SAFETY */
+if(result.duplicate){
 
-/* prevent same QR from firing again */
+  showDuplicateMessage(names.join(", "));
+
+  return;
+}
+
+/* UPDATE LOCAL CACHE */
+scannedFamilies[fid] = names.join(", ");
+
 lastScanned = fid;
 
+/* CLEAR OVERRIDES */
 approvedOverrides = [];
 
 let color;
 
-if(pendingGuests.length > 0){
-  color = "#800020";
-}else if(arrivedExpected < expected){
+if(arrivedExpected < expected){
   color = "#ed6c02";
 }else{
   color = "#2e7d32";
 }
 
+/* SUCCESS SCREEN */
 document.getElementById("familyCard").innerHTML = `
 
 <div style="
@@ -696,11 +622,9 @@ ${names.join(", ")}
 
 <div style="font-size:20px;margin-bottom:25px;font-weight:bold;">
 ${
-  extraGuests > 0
-    ? `⚠ ${extraGuests} Unregistered Guest${extraGuests>1?"s":""}`
-    : (arrivedExpected < expected
-        ? `⚠ ${expected - arrivedExpected} Guest Missing`
-        : `All Registered Guests Present`)
+  arrivedExpected < expected
+    ? `⚠ ${expected - arrivedExpected} Guest Missing`
+    : `All Registered Guests Present`
 }
 </div>
 
