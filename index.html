@@ -608,7 +608,7 @@ let payload = {
   registered:expected,
   arrived:arrivedExpected,
   extra:approvedOverrides.length,
-  names:approvedNames.join(", "),
+  names:names.join(", "),
   device:userName,
   method:"QR Scan"
 };
@@ -629,8 +629,14 @@ if(result.duplicate){
   return;
 }
 
-/* UPDATE LOCAL CACHE */
+/* UPDATE LOCAL CACHE IMMEDIATELY */
 scannedFamilies[fid] = names.join(", ");
+
+/* FORCE LAST SCANNED LOCK */
+lastScanned = fid;
+
+/* PREVENT REPEAT SCAN */
+scanLock = true;
 
 lastScanned = fid;
 
@@ -686,7 +692,10 @@ border:none;
 border-radius:8px;
 cursor:pointer;
 "
-onclick="resetScanner()"
+onclick="
+scanLock=false;
+resetScanner();
+"
 >
 SCAN NEXT GUEST
 </button>
@@ -983,6 +992,8 @@ async function sendToHostApproval(){
 
   closePinModal();
 
+  scannedFamilies[currentFamilyId] = pendingGuestsGlobal.join(", ");
+
   await loadPendingCount();
 
   document.getElementById("familyCard").innerHTML = `
@@ -1013,7 +1024,10 @@ async function sendToHostApproval(){
     </div>
 
     <button
-      onclick="resetScanner()"
+      onclick="
+scanLock=false;
+resetScanner();
+"
       style="
         background:white;
         color:black;
@@ -1060,12 +1074,11 @@ async function submitHostPin(){
     approvalRows = [];
     approvalAction = "";
 
-closeApprovalPanel();
-    
-    await openApprovalPanel();
-    await loadPendingCount();
+document.getElementById("approvalPanel").style.display="none";
 
-    return;
+await loadPendingCount();
+
+return;
   }
 
   // 🟢 NORMAL FLOW
