@@ -943,7 +943,8 @@ async function approveSelected(){
     return;
   }
 
-  openPinModalForApproval(rows, "approve");
+  closeApprovalPanel();
+openPinModalForApproval(rows, "approve");
 }
 
 async function rejectSelected(){
@@ -955,7 +956,8 @@ async function rejectSelected(){
     return;
   }
 
-  openPinModalForApproval(rows, "reject");
+  closeApprovalPanel();
+openPinModalForApproval(rows, "reject");
 }
 
 let pendingGuestsGlobal = [];
