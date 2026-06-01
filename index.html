@@ -144,9 +144,24 @@ width:300px;
 text-align:center;
 ">
 
-<h3>Enter Host PIN</h3>
-
-<div id="pinGuestInfo" style="margin-bottom:10px;font-size:14px;color:#555"></div>
+<h3 style="
+margin-top:0;
+font-size:28px;
+color:#800020;
+">
+RSVP - NOT ATTENDING
+</h3>
+  
+<div
+id="pinGuestInfo"
+style="
+margin-bottom:18px;
+font-size:24px;
+font-weight:bold;
+color:#111;
+line-height:1.4;
+">
+</div>
 
 <input id="hostPinInput"
 type="tel"
@@ -157,12 +172,46 @@ style="width:90%;padding:10px;font-size:20px;text-align:center">
 
 <br><br>
 
-<button onclick="submitHostPin()" style="background:#2e7d32;color:white">
-Submit
+<button
+onclick="submitHostPin()"
+style="
+background:#2e7d32;
+color:white;
+width:90%;
+border:none;
+border-radius:8px;
+font-size:20px;
+font-weight:bold;
+margin-top:10px;
+">
+APPROVE WITH HOST PIN
 </button>
 
-<button onclick="closePinModal()" style="background:#ccc">
-Cancel
+<button
+onclick="sendToHostApproval()"
+style="
+background:#c62828;
+color:white;
+width:90%;
+border:none;
+border-radius:8px;
+font-size:18px;
+margin-top:12px;
+">
+SEND TO HOST FOR APPROVAL
+</button>
+
+<button
+onclick="closePinModal()"
+style="
+background:#ccc;
+width:90%;
+border:none;
+border-radius:8px;
+font-size:18px;
+margin-top:12px;
+">
+CANCEL
 </button>
 
 </div>
@@ -918,6 +967,68 @@ function closePinModal(){
   document.getElementById("pinModal").style.display = "none";
 }
 
+async function sendToHostApproval(){
+
+  await fetch(API_URL,{
+    method:"POST",
+    body: JSON.stringify({
+      action:"requestApproval",
+      func:activeFunction,
+      family:currentFamilyId,
+      familyName:currentFamilyName,
+      guests:pendingGuestsGlobal,
+      device:userName
+    })
+  });
+
+  closePinModal();
+
+  await loadPendingCount();
+
+  document.getElementById("familyCard").innerHTML = `
+
+  <div style="
+    background:#800020;
+    color:white;
+    padding:40px;
+    border-radius:12px;
+    margin-top:20px;
+    text-align:center;
+  ">
+
+    <h2 style="font-size:34px;margin-bottom:25px">
+      SENT FOR HOST APPROVAL
+    </h2>
+
+    <div style="
+      font-size:26px;
+      font-weight:bold;
+      margin-bottom:25px;
+    ">
+      ${pendingGuestsGlobal.join(", ")}
+    </div>
+
+    <div style="font-size:20px;margin-bottom:30px">
+      Waiting for approval from HOST
+    </div>
+
+    <button
+      onclick="resetScanner()"
+      style="
+        background:white;
+        color:black;
+        border:none;
+        border-radius:8px;
+        font-size:22px;
+        padding:14px 24px;
+      ">
+      SCAN NEXT GUEST
+    </button>
+
+  </div>
+  `;
+}
+  
 async function submitHostPin(){
 
   let pin = document.getElementById("hostPinInput").value;
