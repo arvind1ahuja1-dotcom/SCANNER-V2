@@ -2,6 +2,8 @@
 <html>
 <head>
 
+<title>RSVP Scanner</title>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://unpkg.com/html5-qrcode"></script>
@@ -191,7 +193,7 @@ let userRole="";
 
 let currentFamilyId="";
 let currentFamilyName="";
-let approvedExtraGuests=[];
+let approvedOverrides = [];
 
 window.onload = function(){
 
@@ -475,7 +477,7 @@ async function submit(fid,fname){
 currentFamilyId = fid;
 currentFamilyName = fname;
 
-let isPostPinFlow = approvedExtraGuests.length > 0;
+let isPostPinFlow = approvedOverrides.length > 0;
 
 let boxes=document.querySelectorAll("input[type=checkbox]");
 
@@ -500,17 +502,31 @@ boxes.forEach(b=>{
 
   if(b.checked){
 
-    names.push(name);
+  names.push(name);
 
-    if(isExpected){
-      arrivedExpected++;
+  // RSVP EXPECTED
+  if(isExpected){
+
+    arrivedExpected++;
+    approvedNames.push(name);
+
+  }else{
+
+    // HOST-APPROVED OVERRIDE
+    if(approvedOverrides.includes(name)){
+
       approvedNames.push(name);
+
     }else{
+
       extraGuests++;
       pendingGuests.push(name);
+
     }
 
   }
+
+}
 
 });
 
@@ -520,10 +536,6 @@ if(names.length === 0){
 }
 
 let primaryName = window.currentPrimaryName || "";
-
-if(isPostPinFlow){
-  pendingGuests = [];
-}
 
 // 🔴 HANDLE EXTRA GUESTS (PIN OR PENDING)
 
@@ -556,6 +568,20 @@ if(pendingGuests.length > 0 && !isPostPinFlow){
 
   await loadPendingCount();
 
+// UNTICK pending guests to stop loop
+boxes.forEach(b=>{
+
+  let parent = b.closest(".member");
+  let name = parent
+    ? parent.querySelector("span").innerText.trim()
+    : "";
+
+  if(pendingGuests.includes(name)){
+    b.checked = false;
+  }
+
+});
+  
   // 🚨 VERY IMPORTANT
   // STOP attendance write completely
   document.getElementById("familyCard").innerHTML = `
@@ -610,7 +636,7 @@ let payload={
   familyName:fname,
   registered: expected,
   arrived: arrivedExpected,
-  extra: approvedExtraGuests.length,
+  extra: approvedOverrides.length,
   names:approvedNames.concat(approvedExtraGuests).join(", "),
   device:userName,
   method:"QR Scan"
@@ -632,6 +658,8 @@ scannedFamilies[fid]=names.join(", ");
 
 /* prevent same QR from firing again */
 lastScanned = fid;
+
+approvedOverrides = [];
 
 let color;
 
@@ -1015,9 +1043,10 @@ closeApprovalPanel();
 
 async function finalizeSubmissionAfterPin(){
 
-  approvedExtraGuests = pendingGuestsGlobal;
+  approvedOverrides = [...pendingGuestsGlobal];
 
-  // continue submission WITHOUT resetting state
+  closePinModal();
+
   await submit(currentFamilyId, currentFamilyName);
 
 }
