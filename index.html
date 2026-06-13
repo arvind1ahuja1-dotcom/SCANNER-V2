@@ -1164,10 +1164,10 @@ async function searchGuestFamily(){
     .value
     .trim();
 
-  if(!name || !family){
-    alert("Enter Name and Family Name");
-    return;
-  }
+  if(!name && !family){
+  alert("Enter Name OR Family Name");
+  return;
+}
 
   let res = await fetch(
     API_URL +
@@ -1305,10 +1305,9 @@ margin-bottom:15px;
 id="guestNameInput"
 placeholder="Name"
 style="
-flex:1;
+width:140px;
 font-size:18px;
 padding:10px;
-width:auto;
 margin:0;
 ">
 
