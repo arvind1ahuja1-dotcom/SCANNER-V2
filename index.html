@@ -124,6 +124,23 @@ OKAY
 
 <div id="reader" style="width:320px;margin:auto;"></div>
 
+<div id="scannerGuestButton" style="margin-top:15px">
+
+<button
+onclick="openGuestPanelFromScanner()"
+style="
+background:#ed6c02;
+color:white;
+padding:14px 20px;
+border:none;
+font-size:20px;
+border-radius:8px
+">
++ GUESTS
+</button>
+
+</div>
+  
 <div id="familyCard"></div>
 
 <div id="pinModal" style="
@@ -242,6 +259,7 @@ let userRole="";
 
 let currentFamilyId="";
 let currentFamilyName="";
+let guestSearchSource = "";
 let approvedOverrides = [];
 
 window.onload = function(){
@@ -1113,6 +1131,20 @@ function proceedSubmitAfterPin(){
 
 function openGuestPanel(){
 
+  guestSearchSource = "family";
+
+  document.getElementById("guestSearchModal").style.display = "flex";
+
+  document.getElementById("guestNameInput").value = "";
+  document.getElementById("guestFamilyInput").value = "";
+
+  document.getElementById("guestSearchResults").innerHTML = "";
+}
+
+function openGuestPanelFromScanner(){
+
+  guestSearchSource = "scanner";
+
   document.getElementById("guestSearchModal").style.display = "flex";
 
   document.getElementById("guestNameInput").value = "";
@@ -1125,9 +1157,10 @@ function closeGuestSearchModal(){
 
   document.getElementById("guestSearchModal").style.display = "none";
 
-  scanLock = false;
+  if(guestSearchSource === "scanner"){
+    return;
+  }
 
-  resetScanner();
 }
 
 async function searchGuestFamily(){
