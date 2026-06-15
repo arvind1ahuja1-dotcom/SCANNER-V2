@@ -624,24 +624,6 @@ if(pendingGuests.length > 0){
 
 }
 
-// SEND RSVP-NO GUESTS FOR HOST APPROVAL
-if(pendingGuests.length > 0){
-
-  await fetch(API_URL,{
-    method:"POST",
-    body: JSON.stringify({
-      action:"requestApproval",
-      func:activeFunction,
-      family:fid,
-      familyName:fname,
-      guests:pendingGuests,
-      device:userName
-    })
-  });
-
-  await loadPendingCount();
-}
-
 /* DUPLICATE SAFETY */
 if(result.duplicate){
 
@@ -658,8 +640,6 @@ lastScanned = fid;
 
 /* PREVENT REPEAT SCAN */
 scanLock = true;
-
-lastScanned = fid;
 
 /* CLEAR OVERRIDES */
 approvedOverrides = [];
@@ -1022,8 +1002,6 @@ scannedFamilies[currentFamilyId] =
 /* PREVENT SAME QR IMMEDIATE RE-SCAN */
 lastScanned = currentFamilyId;
 
-  scannedFamilies[currentFamilyId] = pendingGuestsGlobal.join(", ");
-
   await loadPendingCount();
 
   document.getElementById("familyCard").innerHTML = `
@@ -1185,16 +1163,34 @@ async function searchGuestFamily(){
   if(data.length === 0){
 
     html = `
-    <div style="
-      color:#c62828;
-      font-size:20px;
-      font-weight:bold;
-      text-align:center;
-      padding:20px;
-    ">
-      No Matching Family Found
-    </div>
-    `;
+
+<div style="
+  color:#c62828;
+  font-size:20px;
+  font-weight:bold;
+  text-align:center;
+  padding:20px;
+">
+  No Matching Family Found
+</div>
+
+<div style="text-align:center">
+
+<button
+onclick="sendUnknownGuestToHost()"
+style="
+background:#c62828;
+color:white;
+border:none;
+border-radius:8px;
+padding:12px 18px;
+font-size:18px;
+">
+SEND TO HOST
+</button>
+
+</div>
+`;
 
     document.getElementById("guestSearchResults").innerHTML = html;
 
@@ -1206,35 +1202,44 @@ async function searchGuestFamily(){
 
     html += `
 
-    <div
-      onclick="selectGuestFamily('${f.family}')"
-      style="
-        border:2px solid #673ab7;
-        border-radius:10px;
-        padding:15px;
-        margin-bottom:12px;
-        cursor:pointer;
-        background:white;
-      ">
+<div
+  onclick="selectGuestFamily('${f.family}')"
+  style="
+    border:2px solid #673ab7;
+    border-radius:10px;
+    padding:15px;
+    margin-bottom:12px;
+    cursor:pointer;
+    background:white;
+  ">
 
-      <div style="
-        font-size:22px;
-        font-weight:bold;
-        color:#111;
-      ">
-        ${f.family}
-      </div>
+  <div style="
+    font-size:22px;
+    font-weight:bold;
+    color:#111;
+  ">
+    ${f.family}
+  </div>
 
-      <div style="
-        margin-top:8px;
-        font-size:18px;
-        color:#444;
-      ">
-        ${f.familyName}
-      </div>
+  <div style="
+    margin-top:6px;
+    font-size:20px;
+    font-weight:bold;
+    color:#333;
+  ">
+    ${f.primaryName} ${f.familyName} Family
+  </div>
 
-    </div>
-    `;
+  <div style="
+    margin-top:4px;
+    font-size:14px;
+    color:#777;
+  ">
+    Match: ${f.matchedName}
+  </div>
+
+</div>
+`;
   });
 
   document.getElementById("guestSearchResults").innerHTML = html;
@@ -1265,6 +1270,42 @@ async function selectGuestFamily(fid){
     await loadFamily(fid);
 
   }
+}
+
+async function sendUnknownGuestToHost(){
+
+  let name =
+    document.getElementById("guestNameInput")
+      .value
+      .trim();
+
+  let family =
+    document.getElementById("guestFamilyInput")
+      .value
+      .trim();
+
+  if(!name){
+    alert("Enter guest name");
+    return;
+  }
+
+  await fetch(API_URL,{
+    method:"POST",
+    body: JSON.stringify({
+      action:"requestApproval",
+      func:activeFunction,
+      family:"",
+      familyName:family,
+      guests:[name],
+      device:userName
+    })
+  });
+
+  await loadPendingCount();
+
+  alert("Approval request sent.");
+
+  closeGuestSearchModal();
 }
   
 </script>
@@ -1342,6 +1383,18 @@ SEARCH
 </button>
 
 <button
+onclick="sendUnknownGuestToHost()"
+style="
+background:#c62828;
+color:white;
+border:none;
+border-radius:8px;
+padding:12px 18px;
+">
+SEND TO HOST
+</button>
+  
+<button
 onclick="closeGuestSearchModal()"
 style="
 background:#999;
@@ -1357,7 +1410,14 @@ CANCEL
 
 <hr style="margin:20px 0">
 
-<div id="guestSearchResults"></div>
+<div
+id="guestSearchResults"
+style="
+max-height:320px;
+overflow-y:auto;
+padding-right:6px;
+">
+</div>
 
 </div>
 </div>
