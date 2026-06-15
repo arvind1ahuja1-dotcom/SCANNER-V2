@@ -267,6 +267,7 @@ let currentFamilyId="";
 let currentFamilyName="";
 let guestSearchSource = "";
 let approvedOverrides = [];
+let extraGuestRequests = [];
 
 window.onload = function(){
 
@@ -555,6 +556,14 @@ let boxes = document.querySelectorAll("input[type=checkbox]");
 let names = [];
 let approvedNames = [];
 let pendingGuests = [];
+
+extraGuestRequests.forEach(g=>{
+
+  if(g.familyId === fid){
+    pendingGuests.push(g.name);
+  }
+
+});
 
 let expected = 0;
 let arrivedExpected = 0;
@@ -1031,7 +1040,68 @@ function openPinModal(guests,familyName){
 }
 
 function closePinModal(){
+
   document.getElementById("pinModal").style.display = "none";
+
+  // CLEAR TEMPORARY MEMORY
+  pendingGuestsGlobal = [];
+  pendingFamilyGlobal = "";
+
+  approvedOverrides = [];
+  extraGuestRequests = [];
+
+  // REMOVE SCAN LOCKS
+  delete scannedFamilies[currentFamilyId];
+
+  lastScanned = "";
+  scanLock = false;
+
+  // SHOW CANCEL CARD
+  document.getElementById("familyCard").innerHTML = `
+
+  <div style="
+    background:#000;
+    color:white;
+    padding:40px;
+    border-radius:12px;
+    margin-top:20px;
+    text-align:center;
+  ">
+
+    <h1 style="
+      font-size:38px;
+      margin-bottom:20px;
+      color:#ff5252;
+    ">
+      CANCELLED
+    </h1>
+
+    <div style="
+      font-size:24px;
+      margin-bottom:30px;
+    ">
+      Scan QR Again
+    </div>
+
+    <button
+      onclick="
+        scanLock=false;
+        resetScanner();
+      "
+      style="
+        background:white;
+        color:black;
+        border:none;
+        border-radius:8px;
+        font-size:22px;
+        padding:14px 28px;
+        cursor:pointer;
+      ">
+      SCAN NEXT GUEST
+    </button>
+
+  </div>
+  `;
 }
 
 async function sendToHostApproval(){
@@ -1385,6 +1455,15 @@ async function sendUnknownGuestToHost(){
   return;
 }
 
+if(guestSearchSource === "family"){
+
+  extraGuestRequests.push({
+    name: name,
+    familyId: currentFamilyId
+  });
+
+}
+  
   await fetch(API_URL,{
     method:"POST",
     body: JSON.stringify({
