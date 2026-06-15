@@ -921,39 +921,39 @@ async function openApprovalPanel(){
   let html="";
 
   data.forEach(g=>{
-    html += `
-<label
-class="item"
-style="
-display:flex;
-align-items:center;
-padding:12px;
-border-bottom:1px solid #ddd;
-cursor:pointer;
-text-align:left;
-background:${(index % 2 === 0) ? "#fafafa" : "#ffffff"};
-">
 
-<input
-type="checkbox"
-value="${g.row}"
-style="
-width:24px;
-height:24px;
-margin-right:15px;
-flex-shrink:0;
-">
+  html += `
+  <label
+  style="
+  display:flex;
+  align-items:center;
+  padding:12px;
+  border-bottom:1px solid #ddd;
+  cursor:pointer;
+  text-align:left;
+  ">
 
-<span style="
-font-size:20px;
-line-height:1.3;
-">
-${g.name} (${g.family})
-</span>
+    <input
+    type="checkbox"
+    value="${g.row}"
+    style="
+    width:24px;
+    height:24px;
+    margin-right:15px;
+    flex-shrink:0;
+    ">
 
-</label>
-`;
-  });
+    <span style="
+    font-size:20px;
+    line-height:1.3;
+    ">
+      ${g.name} (${g.family})
+    </span>
+
+  </label>
+  `;
+
+}););
 
   document.getElementById("approvalList").innerHTML = html;
 }
