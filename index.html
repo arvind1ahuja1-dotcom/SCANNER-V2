@@ -1401,53 +1401,28 @@ async function sendUnknownGuestToHost(){
 
 document.getElementById("guestSearchModal").style.display = "none";
 
-document.getElementById("familyCard").innerHTML = `
+let msg = document.createElement("div");
 
-<div style="
-background:#800020;
-color:white;
-padding:40px;
-border-radius:12px;
-margin-top:20px;
-text-align:center;
-">
+msg.style.position = "fixed";
+msg.style.bottom = "120px";
+msg.style.left = "50%";
+msg.style.transform = "translateX(-50%)";
+msg.style.background = "#2e7d32";
+msg.style.color = "white";
+msg.style.padding = "12px 20px";
+msg.style.borderRadius = "8px";
+msg.style.zIndex = "99999";
+msg.innerText = "Approval Request Sent";
 
-<h2 style="font-size:34px;margin-bottom:25px">
-APPROVAL REQUEST SENT
-</h2>
+document.body.appendChild(msg);
 
-<div style="
-font-size:22px;
-margin-bottom:25px;
-">
-${name || ""} ${family || ""}
-</div>
+setTimeout(()=>{
+  msg.remove();
+},2500);
 
-<div style="
-font-size:18px;
-margin-bottom:30px;
-">
-Waiting for HOST approval
-</div>
+scanLock = false;
 
-<button
-onclick="
-scanLock=false;
 resetScanner();
-"
-style="
-background:white;
-color:black;
-border:none;
-border-radius:8px;
-font-size:22px;
-padding:14px 24px;
-">
-SCAN NEXT GUEST
-</button>
-
-</div>
-`;
 }
   
 </script>
