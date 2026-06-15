@@ -1230,18 +1230,44 @@ SEND TO HOST
     ${f.primaryName} ${f.familyName} Family
   </div>
 
-  <div style="
-    margin-top:4px;
-    font-size:14px;
-    color:#777;
-  ">
-    Match: ${f.matchedName}
-  </div>
-
 </div>
 `;
   });
 
+html += `
+
+<div style="
+margin-top:15px;
+padding-top:15px;
+border-top:1px solid #ddd;
+text-align:center;
+">
+
+<div style="
+font-size:16px;
+color:#666;
+margin-bottom:10px;
+">
+None of these families match?
+</div>
+
+<button
+onclick="sendUnknownGuestToHost()"
+style="
+background:#c62828;
+color:white;
+border:none;
+border-radius:8px;
+padding:12px 20px;
+font-size:18px;
+">
+SEND TO HOST
+</button>
+
+</div>
+
+`;
+  
   document.getElementById("guestSearchResults").innerHTML = html;
 }
 
@@ -1380,18 +1406,6 @@ border-radius:8px;
 padding:12px 18px;
 ">
 SEARCH
-</button>
-
-<button
-onclick="sendUnknownGuestToHost()"
-style="
-background:#c62828;
-color:white;
-border:none;
-border-radius:8px;
-padding:12px 18px;
-">
-SEND TO HOST
 </button>
   
 <button
