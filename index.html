@@ -730,6 +730,8 @@ if(scannerInstance){
 try{ scannerInstance.clear(); }catch(e){}
 }
 
+document.getElementById("scannerGuestButton").style.display = "none";
+  
 const reader = document.getElementById("reader");
 reader.innerHTML="";
 reader.style.height="0px";
@@ -751,6 +753,8 @@ lastScanned = "";
 document.getElementById("reader").style.height="320px";
   
 document.getElementById("familyCard").innerHTML="";
+
+document.getElementById("scannerGuestButton").style.display = "block";
 
 /* show scanner controls again */
 document.getElementById("reader").style.display="block";
