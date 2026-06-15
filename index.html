@@ -1390,7 +1390,10 @@ async function sendUnknownGuestToHost(){
     body: JSON.stringify({
       action:"requestApproval",
       func:activeFunction,
-      family:"",
+      family:
+  guestSearchSource === "family"
+    ? currentFamilyId
+    : "",
       familyName:family,
       guests:[name],
       device:userName
@@ -1404,7 +1407,7 @@ document.getElementById("guestSearchModal").style.display = "none";
 let msg = document.createElement("div");
 
 msg.style.position = "fixed";
-msg.style.bottom = "120px";
+msg.style.bottom = "max(10px, env(safe-area-inset-bottom))";
 msg.style.left = "50%";
 msg.style.transform = "translateX(-50%)";
 msg.style.background = "#2e7d32";
