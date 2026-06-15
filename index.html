@@ -1310,10 +1310,10 @@ async function sendUnknownGuestToHost(){
       .value
       .trim();
 
-  if(!name){
-    alert("Enter guest name");
-    return;
-  }
+  if(!name && !family){
+  alert("Enter Name OR Family Name");
+  return;
+}
 
   await fetch(API_URL,{
     method:"POST",
@@ -1329,9 +1329,55 @@ async function sendUnknownGuestToHost(){
 
   await loadPendingCount();
 
-  alert("Approval request sent.");
+document.getElementById("guestSearchModal").style.display = "none";
 
-  closeGuestSearchModal();
+document.getElementById("familyCard").innerHTML = `
+
+<div style="
+background:#800020;
+color:white;
+padding:40px;
+border-radius:12px;
+margin-top:20px;
+text-align:center;
+">
+
+<h2 style="font-size:34px;margin-bottom:25px">
+APPROVAL REQUEST SENT
+</h2>
+
+<div style="
+font-size:22px;
+margin-bottom:25px;
+">
+${name || ""} ${family || ""}
+</div>
+
+<div style="
+font-size:18px;
+margin-bottom:30px;
+">
+Waiting for HOST approval
+</div>
+
+<button
+onclick="
+scanLock=false;
+resetScanner();
+"
+style="
+background:white;
+color:black;
+border:none;
+border-radius:8px;
+font-size:22px;
+padding:14px 24px;
+">
+SCAN NEXT GUEST
+</button>
+
+</div>
+`;
 }
   
 </script>
