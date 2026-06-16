@@ -1039,6 +1039,12 @@ function openPinModal(guests,familyName){
   document.getElementById("pinModal").style.display = "flex";
 }
 
+function hidePinModal(){
+
+  document.getElementById("pinModal").style.display = "none";
+
+}
+  
 function closePinModal(){
 
   document.getElementById("pinModal").style.display = "none";
@@ -1190,7 +1196,7 @@ async function submitHostPin(){
 
   if(data.success){
 
-  closePinModal();
+  hidePinModal();
 
   // 🔴 APPROVAL FLOW
   if(approvalRows.length > 0){
