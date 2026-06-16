@@ -126,6 +126,93 @@ OKAY
 
 <div id="familyCard"></div>
 
+<!-- GUEST SEARCH PANEL -->
+
+<div id="guestPanel" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:white;
+z-index:99999;
+overflow:auto;
+padding:20px;
+box-sizing:border-box;
+">
+
+<h2
+style="
+margin-top:10px;
+margin-bottom:20px;
+text-align:center;
+">
+Guest Search
+</h2>
+
+<input
+id="guestSearch"
+type="text"
+placeholder="Search Name or Family"
+style="
+width:95%;
+font-size:22px;
+padding:12px;
+margin-bottom:18px;
+">
+
+<div
+id="guestResults"
+style="
+margin-bottom:20px;
+">
+</div>
+
+<div
+id="guestButtons"
+style="
+position:sticky;
+bottom:0;
+background:white;
+padding-top:15px;
+padding-bottom:25px;
+">
+
+<button
+id="sendHostBtn"
+style="
+width:95%;
+background:#c62828;
+color:white;
+border:none;
+border-radius:8px;
+font-size:22px;
+padding:14px;
+margin-bottom:12px;
+">
+SEND TO HOST
+</button>
+
+<button
+id="cancelGuestBtn"
+onclick="closeGuestPanel()"
+style="
+width:95%;
+background:#9e9e9e;
+color:white;
+border:none;
+border-radius:8px;
+font-size:22px;
+padding:14px;
+">
+CANCEL
+</button>
+
+</div>
+
+</div>
+
 <div id="pinModal" style="
 display:none;
 position:fixed;
@@ -1167,6 +1254,24 @@ async function finalizeSubmissionAfterPin(){
 
 function proceedSubmitAfterPin(){
   submit(currentFamilyId,currentFamilyName);
+}
+
+function openGuestPanel(){
+
+  document.getElementById("guestSearch").value="";
+
+  document.getElementById("guestResults").innerHTML="";
+
+  document.getElementById("guestPanel").style.display="block";
+
+  document.getElementById("guestSearch").focus();
+
+}
+
+function closeGuestPanel(){
+
+  document.getElementById("guestPanel").style.display="none";
+
 }
 
 </script>
