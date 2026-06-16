@@ -913,24 +913,60 @@ let pendingData = [];
 
 async function openApprovalPanel(){
 
-  document.getElementById("approvalPanel").style.display="block";
+  document.getElementById("approvalPanel").style.display = "block";
 
-  let res = await fetch(API_URL+"?action=getPending&func="+activeFunction);
+  let res = await fetch(API_URL + "?action=getPending&func=" + activeFunction);
   let data = await res.json();
 
   pendingData = data;
 
-  let html="";
+  let html = "";
 
-  data.forEach(g=>{
+  data.forEach((g,index)=>{
+
     html += `
-    <div style="margin:10px;font-size:18px">
-      <input type="checkbox" value="${g.row}">
-      ${g.name} (${g.family})
-    </div>`;
+
+<label
+style="
+display:flex;
+align-items:center;
+padding:14px 12px;
+border-bottom:1px solid #d9d9d9;
+background:${index % 2 ? "#f7f7f7" : "#ffffff"};
+cursor:pointer;
+user-select:none;
+">
+
+<input
+type="checkbox"
+value="${g.row}"
+style="
+width:24px;
+height:24px;
+margin-right:14px;
+flex-shrink:0;
+">
+
+<span
+style="
+flex:1;
+font-size:22px;
+text-align:left;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+">
+${g.name} (${g.family})
+</span>
+
+</label>
+
+`;
+
   });
 
   document.getElementById("approvalList").innerHTML = html;
+
 }
 
 function closeApprovalPanel(){
