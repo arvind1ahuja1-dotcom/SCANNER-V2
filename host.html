@@ -52,37 +52,11 @@ dataStore = data;
 let html="";
 
 data.forEach((g)=>{
-html += `
-<label
-class="item"
-style="
-display:flex;
-align-items:center;
-padding:12px;
-border-bottom:1px solid #ddd;
-cursor:pointer;
-text-align:left;
-">
-
-<input
-type="checkbox"
-value="${g.row}"
-style="
-width:24px;
-height:24px;
-margin-right:15px;
-flex-shrink:0;
-">
-
-<span style="
-font-size:20px;
-line-height:1.3;
-">
+html+=`
+<div class="item">
+<input type="checkbox" value="${g.row}">
 ${g.name} (${g.family})
-</span>
-
-</label>
-`;
+</div>`;
 });
 
 document.getElementById("list").innerHTML=html;
