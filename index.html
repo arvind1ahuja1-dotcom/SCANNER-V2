@@ -124,29 +124,6 @@ OKAY
 
 <div id="reader" style="width:320px;margin:auto;"></div>
 
-<div id="scannerGuestButton" style="
-position:fixed;
-bottom:50px;
-left:0;
-right:0;
-z-index:1000;
-">
-
-<button
-onclick="openGuestPanelFromScanner()"
-style="
-background:#ed6c02;
-color:white;
-padding:14px 20px;
-border:none;
-font-size:20px;
-border-radius:8px
-">
-+ GUESTS
-</button>
-
-</div>
-  
 <div id="familyCard"></div>
 
 <div id="pinModal" style="
@@ -196,7 +173,6 @@ style="width:90%;padding:10px;font-size:20px;text-align:center">
 <br><br>
 
 <button
-id="hostPinButton"
 onclick="submitHostPin()"
 style="
 background:#2e7d32;
@@ -266,9 +242,7 @@ let userRole="";
 
 let currentFamilyId="";
 let currentFamilyName="";
-let guestSearchSource = "";
 let approvedOverrides = [];
-let extraGuestRequests = [];
 
 window.onload = function(){
 
@@ -375,7 +349,9 @@ activeFunction=data.id;
 
 document.getElementById("functionTitle").innerText=data.name;
 
-document.getElementById("hostControls").style.display = "block";
+if(userRole === "HOST"){
+  document.getElementById("hostControls").style.display="block";
+}
 
 resetScanner();
 
@@ -556,14 +532,6 @@ let names = [];
 let approvedNames = [];
 let pendingGuests = [];
 
-extraGuestRequests.forEach(g=>{
-
-  if(g.familyId === fid){
-    pendingGuests.push(g.name);
-  }
-
-});
-
 let expected = 0;
 let arrivedExpected = 0;
 let extraGuests = 0;
@@ -656,6 +624,24 @@ if(pendingGuests.length > 0){
 
 }
 
+// SEND RSVP-NO GUESTS FOR HOST APPROVAL
+if(pendingGuests.length > 0){
+
+  await fetch(API_URL,{
+    method:"POST",
+    body: JSON.stringify({
+      action:"requestApproval",
+      func:activeFunction,
+      family:fid,
+      familyName:fname,
+      guests:pendingGuests,
+      device:userName
+    })
+  });
+
+  await loadPendingCount();
+}
+
 /* DUPLICATE SAFETY */
 if(result.duplicate){
 
@@ -672,6 +658,8 @@ lastScanned = fid;
 
 /* PREVENT REPEAT SCAN */
 scanLock = true;
+
+lastScanned = fid;
 
 /* CLEAR OVERRIDES */
 approvedOverrides = [];
@@ -744,8 +732,6 @@ if(scannerInstance){
 try{ scannerInstance.clear(); }catch(e){}
 }
 
-document.getElementById("scannerGuestButton").style.display = "none";
-  
 const reader = document.getElementById("reader");
 reader.innerHTML="";
 reader.style.height="0px";
@@ -767,8 +753,6 @@ lastScanned = "";
 document.getElementById("reader").style.height="320px";
   
 document.getElementById("familyCard").innerHTML="";
-
-document.getElementById("scannerGuestButton").style.display = "block";
 
 /* show scanner controls again */
 document.getElementById("reader").style.display="block";
@@ -929,66 +913,24 @@ let pendingData = [];
 
 async function openApprovalPanel(){
 
-  document.getElementById("approvalPanel").style.display = "block";
+  document.getElementById("approvalPanel").style.display="block";
 
-  let res = await fetch(API_URL + "?action=getPending&func=" + activeFunction);
+  let res = await fetch(API_URL+"?action=getPending&func="+activeFunction);
   let data = await res.json();
 
   pendingData = data;
 
-  const isHost =
-    String(userRole || "").trim().toUpperCase() === "HOST";
+  let html="";
 
-  let html = "";
-
-  data.forEach((g,index)=>{
-
+  data.forEach(g=>{
     html += `
-
-<label
-style="
-display:flex;
-align-items:center;
-padding:12px;
-border-bottom:1px solid #ddd;
-background:${index % 2 ? "#f7f7f7" : "#ffffff"};
-cursor:${isHost ? "pointer" : "default"};
-text-align:left;
-">
-
-${isHost ? `
-<input
-type="checkbox"
-value="${g.row}"
-style="
-width:24px;
-height:24px;
-margin-right:15px;
-flex-shrink:0;
-">
-` : ""}
-
-<span
-style="
-font-size:20px;
-line-height:1.3;
-flex:1;
-">
-${g.name} (${g.family})
-</span>
-
-</label>
-`;
-
+    <div style="margin:10px;font-size:18px">
+      <input type="checkbox" value="${g.row}">
+      ${g.name} (${g.family})
+    </div>`;
   });
 
   document.getElementById("approvalList").innerHTML = html;
-
-  document.getElementById("approveBtn").style.display =
-    isHost ? "inline-block" : "none";
-
-  document.getElementById("rejectBtn").style.display =
-    isHost ? "inline-block" : "none";
 }
 
 function closeApprovalPanel(){
@@ -1043,7 +985,6 @@ let pendingGuestsGlobal = [];
 let pendingFamilyGlobal = "";
 
 function openPinModal(guests,familyName){
-
   pendingGuestsGlobal = guests;
   pendingFamilyGlobal = familyName;
 
@@ -1051,86 +992,11 @@ function openPinModal(guests,familyName){
     guests.join(", ") + " (" + familyName + ")";
 
   document.getElementById("hostPinInput").value = "";
-
-  // Show Host PIN button only for HOST users
-  if (String(userRole).trim().toUpperCase() === "HOST") {
-    document.getElementById("hostPinButton").style.display = "block";
-  } else {
-    document.getElementById("hostPinButton").style.display = "none";
-  }
-
   document.getElementById("pinModal").style.display = "flex";
 }
 
-function hidePinModal(){
-
-  document.getElementById("pinModal").style.display = "none";
-
-}
-  
 function closePinModal(){
-
   document.getElementById("pinModal").style.display = "none";
-
-  // CLEAR TEMPORARY MEMORY
-  pendingGuestsGlobal = [];
-  pendingFamilyGlobal = "";
-
-  approvedOverrides = [];
-  extraGuestRequests = [];
-
-  // REMOVE SCAN LOCKS
-  delete scannedFamilies[currentFamilyId];
-
-  lastScanned = "";
-  scanLock = false;
-
-  // SHOW CANCEL CARD
-  document.getElementById("familyCard").innerHTML = `
-
-  <div style="
-    background:#000;
-    color:white;
-    padding:40px;
-    border-radius:12px;
-    margin-top:20px;
-    text-align:center;
-  ">
-
-    <h1 style="
-      font-size:38px;
-      margin-bottom:20px;
-      color:#ff5252;
-    ">
-      CANCELLED
-    </h1>
-
-    <div style="
-      font-size:24px;
-      margin-bottom:30px;
-    ">
-      Scan QR Again
-    </div>
-
-    <button
-      onclick="
-        scanLock=false;
-        resetScanner();
-      "
-      style="
-        background:white;
-        color:black;
-        border:none;
-        border-radius:8px;
-        font-size:22px;
-        padding:14px 28px;
-        cursor:pointer;
-      ">
-      SCAN NEXT GUEST
-    </button>
-
-  </div>
-  `;
 }
 
 async function sendToHostApproval(){
@@ -1155,6 +1021,8 @@ scannedFamilies[currentFamilyId] =
 
 /* PREVENT SAME QR IMMEDIATE RE-SCAN */
 lastScanned = currentFamilyId;
+
+  scannedFamilies[currentFamilyId] = pendingGuestsGlobal.join(", ");
 
   await loadPendingCount();
 
@@ -1219,7 +1087,7 @@ async function submitHostPin(){
 
   if(data.success){
 
-  hidePinModal();
+  closePinModal();
 
   // 🔴 APPROVAL FLOW
   if(approvalRows.length > 0){
@@ -1255,15 +1123,9 @@ async function finalizeSubmissionAfterPin(){
 
   approvedOverrides = [...pendingGuestsGlobal];
 
-  hidePinModal();
+  closePinModal();
 
   await submit(currentFamilyId, currentFamilyName);
-
-}
-
-function hidePinModal(){
-
-  document.getElementById("pinModal").style.display = "none";
 
 }
 
@@ -1272,20 +1134,6 @@ function proceedSubmitAfterPin(){
 }
 
 function openGuestPanel(){
-
-  guestSearchSource = "family";
-
-  document.getElementById("guestSearchModal").style.display = "flex";
-
-  document.getElementById("guestNameInput").value = "";
-  document.getElementById("guestFamilyInput").value = "";
-
-  document.getElementById("guestSearchResults").innerHTML = "";
-}
-
-function openGuestPanelFromScanner(){
-
-  guestSearchSource = "scanner";
 
   document.getElementById("guestSearchModal").style.display = "flex";
 
@@ -1299,10 +1147,9 @@ function closeGuestSearchModal(){
 
   document.getElementById("guestSearchModal").style.display = "none";
 
-  if(guestSearchSource === "scanner"){
-    return;
-  }
+  scanLock = false;
 
+  resetScanner();
 }
 
 async function searchGuestFamily(){
@@ -1338,34 +1185,16 @@ async function searchGuestFamily(){
   if(data.length === 0){
 
     html = `
-
-<div style="
-  color:#c62828;
-  font-size:20px;
-  font-weight:bold;
-  text-align:center;
-  padding:20px;
-">
-  No Matching Family Found
-</div>
-
-<div style="text-align:center">
-
-<button
-onclick="sendUnknownGuestToHost()"
-style="
-background:#c62828;
-color:white;
-border:none;
-border-radius:8px;
-padding:12px 18px;
-font-size:18px;
-">
-SEND TO HOST
-</button>
-
-</div>
-`;
+    <div style="
+      color:#c62828;
+      font-size:20px;
+      font-weight:bold;
+      text-align:center;
+      padding:20px;
+    ">
+      No Matching Family Found
+    </div>
+    `;
 
     document.getElementById("guestSearchResults").innerHTML = html;
 
@@ -1377,72 +1206,37 @@ SEND TO HOST
 
     html += `
 
-<div
-  onclick="selectGuestFamily('${f.family}')"
-  style="
-    border:2px solid #673ab7;
-    border-radius:10px;
-    padding:15px;
-    margin-bottom:12px;
-    cursor:pointer;
-    background:white;
-  ">
+    <div
+      onclick="selectGuestFamily('${f.family}')"
+      style="
+        border:2px solid #673ab7;
+        border-radius:10px;
+        padding:15px;
+        margin-bottom:12px;
+        cursor:pointer;
+        background:white;
+      ">
 
-  <div style="
-    font-size:22px;
-    font-weight:bold;
-    color:#111;
-  ">
-    ${f.family}
-  </div>
+      <div style="
+        font-size:22px;
+        font-weight:bold;
+        color:#111;
+      ">
+        ${f.family}
+      </div>
 
-  <div style="
-    margin-top:6px;
-    font-size:20px;
-    font-weight:bold;
-    color:#333;
-  ">
-    ${f.primaryName} ${f.familyName} Family
-  </div>
+      <div style="
+        margin-top:8px;
+        font-size:18px;
+        color:#444;
+      ">
+        ${f.familyName}
+      </div>
 
-</div>
-`;
+    </div>
+    `;
   });
 
-html += `
-
-<div style="
-margin-top:15px;
-padding-top:15px;
-border-top:1px solid #ddd;
-text-align:center;
-">
-
-<div style="
-font-size:16px;
-color:#666;
-margin-bottom:10px;
-">
-None of these families match?
-</div>
-
-<button
-onclick="sendUnknownGuestToHost()"
-style="
-background:#c62828;
-color:white;
-border:none;
-border-radius:8px;
-padding:12px 20px;
-font-size:18px;
-">
-SEND TO HOST
-</button>
-
-</div>
-
-`;
-  
   document.getElementById("guestSearchResults").innerHTML = html;
 }
 
@@ -1471,75 +1265,6 @@ async function selectGuestFamily(fid){
     await loadFamily(fid);
 
   }
-}
-
-async function sendUnknownGuestToHost(){
-
-  let name =
-    document.getElementById("guestNameInput")
-      .value
-      .trim();
-
-  let family =
-    document.getElementById("guestFamilyInput")
-      .value
-      .trim();
-
-  if(!name && !family){
-  alert("Enter Name OR Family Name");
-  return;
-}
-
-if(guestSearchSource === "family"){
-
-  extraGuestRequests.push({
-    name: name,
-    familyId: currentFamilyId
-  });
-
-}
-  
-  await fetch(API_URL,{
-    method:"POST",
-    body: JSON.stringify({
-      action:"requestApproval",
-      func:activeFunction,
-      family:
-  guestSearchSource === "family"
-    ? currentFamilyId
-    : "",
-      familyName:family,
-      guests:[name],
-      device:userName
-    })
-  });
-
-  await loadPendingCount();
-
-document.getElementById("guestSearchModal").style.display = "none";
-
-let msg = document.createElement("div");
-
-msg.style.position = "fixed";
-msg.style.bottom = "max(10px, env(safe-area-inset-bottom))";
-msg.style.left = "50%";
-msg.style.transform = "translateX(-50%)";
-msg.style.background = "#2e7d32";
-msg.style.color = "white";
-msg.style.padding = "12px 20px";
-msg.style.borderRadius = "8px";
-msg.style.zIndex = "99999";
-msg.innerText = "Approval Request Sent";
-
-document.body.appendChild(msg);
-
-setTimeout(()=>{
-  msg.remove();
-},2500);
-
-scanLock = false;
-
-resetScanner();
 }
   
 </script>
@@ -1571,9 +1296,10 @@ color:#ed6c02;
 
 <div style="
 display:flex;
-flex-direction:column;
+justify-content:center;
 align-items:center;
-gap:10px;
+gap:8px;
+flex-wrap:wrap;
 margin-bottom:15px;
 ">
 
@@ -1581,7 +1307,7 @@ margin-bottom:15px;
 id="guestNameInput"
 placeholder="Name"
 style="
-width:220px;
+width:140px;
 font-size:18px;
 padding:10px;
 margin:0;
@@ -1591,7 +1317,7 @@ margin:0;
 id="guestFamilyInput"
 placeholder="Family Name"
 style="
-width:220px;
+width:140px;
 font-size:18px;
 padding:10px;
 margin:0;
@@ -1615,7 +1341,7 @@ padding:12px 18px;
 ">
 SEARCH
 </button>
-  
+
 <button
 onclick="closeGuestSearchModal()"
 style="
@@ -1632,14 +1358,7 @@ CANCEL
 
 <hr style="margin:20px 0">
 
-<div
-id="guestSearchResults"
-style="
-max-height:320px;
-overflow-y:auto;
-padding-right:6px;
-">
-</div>
+<div id="guestSearchResults"></div>
 
 </div>
 </div>
@@ -1660,19 +1379,8 @@ padding:20px;
 
 <br>
 
-<button
-id="approveBtn"
-onclick="approveSelected()"
-style="background:#2e7d32;color:white">
-Approve
-</button>
-
-<button
-id="rejectBtn"
-onclick="rejectSelected()"
-style="background:#c62828;color:white">
-Reject
-</button>
+<button onclick="approveSelected()" style="background:#2e7d32;color:white">Approve</button>
+<button onclick="rejectSelected()" style="background:#c62828;color:white">Reject</button>
 
 <br><br>
 
