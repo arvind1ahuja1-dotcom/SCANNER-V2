@@ -1232,9 +1232,15 @@ async function finalizeSubmissionAfterPin(){
 
   approvedOverrides = [...pendingGuestsGlobal];
 
-  closePinModal();
+  hidePinModal();
 
   await submit(currentFamilyId, currentFamilyName);
+
+}
+
+function hidePinModal(){
+
+  document.getElementById("pinModal").style.display = "none";
 
 }
 
