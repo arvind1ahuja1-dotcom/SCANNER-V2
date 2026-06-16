@@ -49,17 +49,47 @@ let data = await res.json();
 
 dataStore = data;
 
-let html="";
+let html = "";
 
-data.forEach((g)=>{
-html+=`
-<div class="item">
-<input type="checkbox" value="${g.row}">
+data.forEach((g, index)=>{
+
+html += `
+
+<label
+class="item"
+style="
+display:flex;
+align-items:center;
+padding:14px 10px;
+border-bottom:1px solid #d9d9d9;
+background:${index % 2 ? "#f7f7f7" : "#ffffff"};
+cursor:pointer;
+text-align:left;
+font-size:22px;
+line-height:1.4;
+">
+
+<input
+type="checkbox"
+value="${g.row}"
+style="
+width:24px;
+height:24px;
+margin-right:14px;
+flex-shrink:0;
+">
+
+<span style="flex:1;">
 ${g.name} (${g.family})
-</div>`;
+</span>
+
+</label>
+
+`;
+
 });
 
-document.getElementById("list").innerHTML=html;
+document.getElementById("list").innerHTML = html;
 
 }
 
