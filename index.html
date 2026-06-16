@@ -191,21 +191,6 @@ padding:12px;
 box-sizing:border-box;
 ">
 
-<div style="text-align:center;margin-bottom:8px;">
-
-<input
-id="guestSearch"
-type="text"
-placeholder="Search Name or Family"
-style="
-width:88%;
-padding:10px;
-font-size:20px;
-box-sizing:border-box;
-">
-
-</div>
-
 <div style="
 display:flex;
 justify-content:space-between;
@@ -256,7 +241,10 @@ margin-bottom:8px;
 <button
 id="sendHostBtn"
 style="
-width:100%;
+width:88%;
+display:block;
+margin:0 auto;
+box-sizing:border-box;
 background:#c62828;
 color:white;
 border:none;
@@ -592,6 +580,8 @@ renderFamily(data);
 
 function renderFamily(data){
 
+document.getElementById("scannerGuestBtn").style.display="none";
+  
 window.currentPrimaryName = data.members[0]?.name || "";
 
 let html=`
@@ -894,6 +884,8 @@ scanLock = false;
 lastScanned = "";
 
 document.getElementById("reader").style.height="320px";
+
+document.getElementById("scannerGuestBtn").style.display="inline-block";
   
 document.getElementById("familyCard").innerHTML="";
 
@@ -1342,6 +1334,27 @@ async function searchFamilies(){
 
   let data = await res.json();
 
+  if(data.length===0){
+
+document.getElementById("guestResults").innerHTML=`
+
+<div style="
+text-align:center;
+color:#777;
+font-size:22px;
+padding:30px;
+">
+
+No matching family found
+
+</div>
+
+`;
+
+return;
+
+}
+
   let html="";
 
   data.forEach(f=>{
@@ -1354,6 +1367,9 @@ style="
 background:#fff7f2;
 border:1px solid #ccc;
 border-radius:10px;
+width:90%;
+margin:0 auto 10px auto;
+box-sizing:border-box;
 padding:8px;
 margin-bottom:12px;
 cursor:pointer;
