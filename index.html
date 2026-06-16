@@ -196,6 +196,7 @@ style="width:90%;padding:10px;font-size:20px;text-align:center">
 <br><br>
 
 <button
+id="hostPinButton"
 onclick="submitHostPin()"
 style="
 background:#2e7d32;
@@ -374,9 +375,7 @@ activeFunction=data.id;
 
 document.getElementById("functionTitle").innerText=data.name;
 
-if(userRole === "HOST"){
-  document.getElementById("hostControls").style.display="block";
-}
+document.getElementById("hostControls").style.display = "block";
 
 resetScanner();
 
@@ -1029,6 +1028,7 @@ let pendingGuestsGlobal = [];
 let pendingFamilyGlobal = "";
 
 function openPinModal(guests,familyName){
+
   pendingGuestsGlobal = guests;
   pendingFamilyGlobal = familyName;
 
@@ -1036,6 +1036,14 @@ function openPinModal(guests,familyName){
     guests.join(", ") + " (" + familyName + ")";
 
   document.getElementById("hostPinInput").value = "";
+
+  // Show Host PIN button only for HOST users
+  if (String(userRole).trim().toUpperCase() === "HOST") {
+    document.getElementById("hostPinButton").style.display = "block";
+  } else {
+    document.getElementById("hostPinButton").style.display = "none";
+  }
+
   document.getElementById("pinModal").style.display = "flex";
 }
 
