@@ -189,6 +189,21 @@ padding:12px;
 margin-bottom:18px;
 ">
 
+<button
+onclick="searchFamilies()"
+style="
+width:95%;
+background:#2e7d32;
+color:white;
+border:none;
+border-radius:8px;
+font-size:22px;
+padding:12px;
+margin-bottom:18px;
+">
+SEARCH
+</button>
+
 <div
 id="guestResults"
 style="
@@ -1295,6 +1310,77 @@ function openGuestPanel(){
 
 }
 
+async function searchFamilies(){
+
+  let txt =
+    document.getElementById("guestSearch").value.trim();
+
+  if(txt===""){
+    document.getElementById("guestResults").innerHTML="";
+    return;
+  }
+
+  let res = await fetch(
+    API_URL +
+    "?action=searchFamilies&search=" +
+    encodeURIComponent(txt)
+  );
+
+  let data = await res.json();
+
+  let html="";
+
+  data.forEach(f=>{
+
+    html += `
+
+<div
+onclick="selectFamily('${f.family}')"
+style="
+background:white;
+border:1px solid #ccc;
+border-radius:10px;
+padding:18px;
+margin-bottom:12px;
+cursor:pointer;
+text-align:center;
+">
+
+<div
+style="
+font-size:22px;
+font-weight:bold;
+color:#1565c0;
+">
+${f.family}
+</div>
+
+<div
+style="
+font-size:26px;
+margin-top:8px;
+">
+${f.primary} ${f.familyName}
+</div>
+
+</div>
+
+`;
+
+  });
+
+  document.getElementById("guestResults").innerHTML=html;
+
+}
+
+function selectFamily(fid){
+
+  closeGuestPanel();
+
+  loadFamily(fid);
+
+}
+  
 function closeGuestPanel(){
 
   document.getElementById("guestPanel").style.display="none";
