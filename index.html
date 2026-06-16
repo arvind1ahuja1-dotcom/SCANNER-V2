@@ -929,51 +929,66 @@ let pendingData = [];
 
 async function openApprovalPanel(){
 
-  document.getElementById("approvalPanel").style.display="block";
+  document.getElementById("approvalPanel").style.display = "block";
 
-  let res = await fetch(API_URL+"?action=getPending&func="+activeFunction);
+  let res = await fetch(API_URL + "?action=getPending&func=" + activeFunction);
   let data = await res.json();
 
   pendingData = data;
 
-  let html="";
+  const isHost =
+    String(userRole || "").trim().toUpperCase() === "HOST";
 
-  data.forEach(g=>{
+  let html = "";
 
-  html += `
-  <label
-  style="
-  display:flex;
-  align-items:center;
-  padding:12px;
-  border-bottom:1px solid #ddd;
-  cursor:pointer;
-  text-align:left;
-  ">
+  data.forEach((g,index)=>{
 
-    <input
-    type="checkbox"
-    value="${g.row}"
-    style="
-    width:24px;
-    height:24px;
-    margin-right:15px;
-    flex-shrink:0;
-    ">
+    html += `
 
-    <span style="
-    font-size:20px;
-    line-height:1.3;
-    ">
-      ${g.name} (${g.family})
-    </span>
+<label
+style="
+display:flex;
+align-items:center;
+padding:12px;
+border-bottom:1px solid #ddd;
+background:${index % 2 ? "#f7f7f7" : "#ffffff"};
+cursor:${isHost ? "pointer" : "default"};
+text-align:left;
+">
 
-  </label>
-  `;
+${isHost ? `
+<input
+type="checkbox"
+value="${g.row}"
+style="
+width:24px;
+height:24px;
+margin-right:15px;
+flex-shrink:0;
+">
+` : ""}
 
-});
+<span
+style="
+font-size:20px;
+line-height:1.3;
+flex:1;
+">
+${g.name} (${g.family})
+</span>
+
+</label>
+`;
+
+  });
 
   document.getElementById("approvalList").innerHTML = html;
+
+  document.getElementById("approveBtn").style.display =
+    isHost ? "inline-block" : "none";
+
+  document.getElementById("rejectBtn").style.display =
+    isHost ? "inline-block" : "none";
 }
 
 function closeApprovalPanel(){
@@ -1645,8 +1660,19 @@ padding:20px;
 
 <br>
 
-<button onclick="approveSelected()" style="background:#2e7d32;color:white">Approve</button>
-<button onclick="rejectSelected()" style="background:#c62828;color:white">Reject</button>
+<button
+id="approveBtn"
+onclick="approveSelected()"
+style="background:#2e7d32;color:white">
+Approve
+</button>
+
+<button
+id="rejectBtn"
+onclick="rejectSelected()"
+style="background:#c62828;color:white">
+Reject
+</button>
 
 <br><br>
 
