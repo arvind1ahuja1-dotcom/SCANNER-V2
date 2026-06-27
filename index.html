@@ -1120,11 +1120,37 @@ async function loadPendingCount(){
 
 let pendingData = [];
 
+let approvalRefreshTimer = null;
+
 async function openApprovalPanel(){
 
   document.getElementById("approvalPanel").style.display = "block";
 
-  let res = await fetch(API_URL + "?action=getPending&func=" + activeFunction);
+  await loadApprovalPanel();
+
+  if(!approvalRefreshTimer){
+
+    approvalRefreshTimer = setInterval(async ()=>{
+
+      if(
+        document.getElementById("approvalPanel").style.display=="block"
+      ){
+        await loadApprovalPanel();
+      }
+
+    },2000);
+
+  }
+
+}
+
+async function loadApprovalPanel(){
+
+  let res = await fetch(
+    API_URL + "?action=getPending&func=" + activeFunction,
+    {cache:"no-store"}
+  );
+
   let data = await res.json();
 
   pendingData = data;
@@ -1165,7 +1191,9 @@ white-space:nowrap;
 overflow:hidden;
 text-overflow:ellipsis;
 ">
+
 ${g.name} (${g.family})
+
 </span>
 
 </label>
@@ -1174,12 +1202,42 @@ ${g.name} (${g.family})
 
   });
 
+  if(data.length==0){
+
+    html=`
+
+<div style="
+padding:40px;
+font-size:24px;
+color:#2e7d32;
+font-weight:bold;
+text-align:center;
+">
+
+No Pending Guests
+
+</div>
+
+`;
+
+  }
+
   document.getElementById("approvalList").innerHTML = html;
 
 }
 
 function closeApprovalPanel(){
+
   document.getElementById("approvalPanel").style.display="none";
+
+  if(approvalRefreshTimer){
+
+    clearInterval(approvalRefreshTimer);
+
+    approvalRefreshTimer = null;
+
+  }
+
 }
 
 function getSelectedRows(){
