@@ -847,17 +847,40 @@ async function submit(fid, fname) {
 
   if (pendingGuests.length > 0) {
 
-    pendingGuestsGlobal = [...pendingGuests];
+    pendingGuestObjects = [];
+
+    boxes.forEach(box => {
+
+        if (!box.checked) return;
+
+        if (box.dataset.expected === "true") return;
+
+        const row = box.closest(".member");
+
+        const name = row.querySelector("span").innerText.trim();
+
+        pendingGuestObjects.push({
+
+            name: name,
+
+            extra: box.dataset.extra === "true"
+
+        });
+
+    });
+
+    pendingGuestsGlobal =
+        pendingGuestObjects.map(g => g.name);
 
     pendingFamilyGlobal = fname;
 
     window.pendingAttendancePayload = payload;
 
-    openPinModal(pendingGuests, fname);
+    openPinModal(pendingGuestsGlobal, fname);
 
     return;
 
-  }
+}
 
   /*
   ============================================
@@ -1330,6 +1353,9 @@ openPinModalForApproval(rows, "reject");
 }
 
 let pendingGuestsGlobal = [];
+
+let pendingGuestObjects = [];
+  
 let pendingFamilyGlobal = "";
 
 function openPinModal(guests,familyName){
