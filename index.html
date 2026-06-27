@@ -592,25 +592,12 @@ document.getElementById("scannerGuestBtn").style.display="none";
   
 window.currentPrimaryName = data.members[0]?.name || "";
 
-if (displayedGuests.length === 0) {
-
-    data.members.forEach(m => {
-
-        displayedGuests.push({
-
-            name: m.name,
-
-            attending: m.attending,
-
-            expected: m.attending,
-
-            extra: false
-
-        });
-
-    });
-
-}
+displayedGuests = data.members.map(m => ({
+    name: m.name,
+    attending: m.attending,
+    expected: m.attending,
+    extra: false
+}));
 
 data.members = displayedGuests;
 
@@ -1008,6 +995,7 @@ try{ scannerInstance.clear(); }catch(e){}
 /* reset scan guards */
 scanLock = false;
 lastScanned = "";
+displayedGuests = [];
 
 document.getElementById("reader").style.height="320px";
 
