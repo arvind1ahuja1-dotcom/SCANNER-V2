@@ -690,6 +690,7 @@ let boxes = document.querySelectorAll("input[type=checkbox]");
 let names = [];
 let approvedNames = [];
 let pendingGuests = [];
+let absentGuests = [];
 
 let expected = 0;
 let arrivedExpected = 0;
@@ -706,37 +707,42 @@ boxes.forEach(b=>{
     : "";
 
   if(isExpected){
+
     expected++;
-  }
 
-  if(b.checked){
+    if(b.checked){
 
-    names.push(name);
-
-    // RSVP YES
-    if(isExpected){
-
-      approvedNames.push(name);
-      arrivedExpected++;
-
-    }else{
-
-      // HOST-APPROVED RSVP-NO
-      if(approvedOverrides.includes(name)){
-
+        names.push(name);
         approvedNames.push(name);
         arrivedExpected++;
 
-      }else{
+    }else{
 
-        pendingGuests.push(name);
-        extraGuests++;
-
-      }
+        absentGuests.push(name);
 
     }
 
-  }
+}else{
+
+    if(b.checked){
+
+        names.push(name);
+
+        if(approvedOverrides.includes(name)){
+
+            approvedNames.push(name);
+            arrivedExpected++;
+
+        }else{
+
+            pendingGuests.push(name);
+            extraGuests++;
+
+        }
+
+    }
+
+}
 
 });
 
