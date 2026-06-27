@@ -680,165 +680,178 @@ document.getElementById("familyCard").innerHTML=html;
 
 }
   
-async function submit(fid,fname){
+async function submit(fid, fname) {
 
-currentFamilyId = fid;
-currentFamilyName = fname;
+  currentFamilyId = fid;
+  currentFamilyName = fname;
 
-let boxes = document.querySelectorAll("input[type=checkbox]");
+  const primaryName = window.currentPrimaryName || "";
 
-let names = [];
-let approvedNames = [];
-let pendingGuests = [];
-let absentGuests = [];
+  const boxes = document.querySelectorAll(".member input[type=checkbox]");
 
-let expected = 0;
-let arrivedExpected = 0;
-let extraGuests = 0;
+  let names = [];
+  let approvedNames = [];
+  let pendingGuests = [];
+  let absentGuests = [];
 
-boxes.forEach(b=>{
+  let expected = 0;
+  let arrivedExpected = 0;
+  let extraGuests = 0;
 
-  let isExpected = b.dataset.expected === "true";
+  boxes.forEach(box => {
 
-  let parent = b.closest(".member");
+    const row = box.closest(".member");
 
-  let name = parent
-    ? parent.querySelector("span").innerText.trim()
-    : "";
+    const name = row
+      ? row.querySelector("span").innerText.trim()
+      : "";
 
-  if(isExpected){
+    const expectedGuest =
+      box.dataset.expected === "true";
 
-    expected++;
+    if (expectedGuest) {
 
-    if(b.checked){
+      expected++;
+
+      if (box.checked) {
 
         names.push(name);
         approvedNames.push(name);
         arrivedExpected++;
 
-    }else{
+      } else {
 
         absentGuests.push(name);
 
-    }
+      }
 
-}else{
+    } else {
 
-    if(b.checked){
+      if (box.checked) {
 
         names.push(name);
 
-        if(approvedOverrides.includes(name)){
+        if (approvedOverrides.includes(name)) {
 
-            approvedNames.push(name);
-            arrivedExpected++;
+          approvedNames.push(name);
+          arrivedExpected++;
 
-        }else{
+        } else {
 
-            pendingGuests.push(name);
-            extraGuests++;
+          pendingGuests.push(name);
+          extraGuests++;
 
         }
 
+      }
+
     }
 
-}
-
-});
-
-if(names.length === 0){
-  alert("Please select at least one guest.");
-  return;
-}
-
-/* NEED HOST APPROVAL */
-
-let primaryName = window.currentPrimaryName || "";
-
-let payload = {
-  action:"submit",
-  func:activeFunction,
-  family:fid,
-  primary:primaryName,
-  familyName:fname,
-  registered:expected,
-  arrived:arrivedExpected,
-  extra:approvedOverrides.length,
-  names:approvedNames.join(", "),
-  device:userName,
-  method:"QR Scan"
-};
-
-
-  
-/* WRITE ATTENDANCE */
-let res = await fetch(API_URL,{
-  method:"POST",
-  body:JSON.stringify(payload)
-});
-
-let result = await res.json();
-
-// NOW OPEN RSVP-NO APPROVAL MODAL
-if(pendingGuests.length > 0){
-
-  pendingGuestsGlobal = pendingGuests;
-  pendingFamilyGlobal = fname;
-
-  openPinModal(pendingGuests, fname);
-
-}
-
-// SEND RSVP-NO GUESTS FOR HOST APPROVAL
-if(pendingGuests.length > 0){
-
-  await fetch(API_URL,{
-    method:"POST",
-    body: JSON.stringify({
-      action:"requestApproval",
-      func:activeFunction,
-      family:fid,
-      familyName:fname,
-      guests:pendingGuests,
-      device:userName
-    })
   });
 
-  await loadPendingCount();
-}
+  if (names.length === 0) {
 
-/* DUPLICATE SAFETY */
-if(result.duplicate){
+    alert("Please select at least one guest.");
 
-  showDuplicateMessage(names.join(", "));
+    return;
 
-  return;
-}
+  }
 
-/* UPDATE LOCAL CACHE IMMEDIATELY */
-scannedFamilies[fid] = names.join(", ");
+  const payload = {
 
-/* FORCE LAST SCANNED LOCK */
-lastScanned = fid;
+    action: "submit",
 
-/* PREVENT REPEAT SCAN */
-scanLock = true;
+    func: activeFunction,
 
-lastScanned = fid;
+    family: fid,
 
-/* CLEAR OVERRIDES */
-approvedOverrides = [];
+    primary: primaryName,
 
-let color;
+    familyName: fname,
 
-if(arrivedExpected < expected){
-  color = "#ed6c02";
-}else{
-  color = "#2e7d32";
-}
+    registered: expected,
 
-/* SUCCESS SCREEN */
-document.getElementById("familyCard").innerHTML = `
+    arrived: arrivedExpected,
+
+    extra: approvedOverrides.length,
+
+    names: approvedNames.join(", "),
+
+    device: userName,
+
+    method: "QR Scan"
+
+  };
+
+  /*
+  ============================================
+  DECISION POINT
+  ============================================
+
+  IF THERE ARE RSVP-NO / EXTRA GUESTS
+  DO NOT WRITE ANYTHING YET.
+
+  Simply remember the payload and ask the
+  doorman whether to Send To Host.
+
+  Attendance Log will ONLY be written after
+  SEND TO HOST is pressed.
+
+  */
+
+  if (pendingGuests.length > 0) {
+
+    pendingGuestsGlobal = [...pendingGuests];
+
+    pendingFamilyGlobal = fname;
+
+    window.pendingAttendancePayload = payload;
+
+    openPinModal(pendingGuests, fname);
+
+    return;
+
+  }
+
+  /*
+  ============================================
+  NO HOST APPROVAL REQUIRED
+  Continue directly to Attendance Log.
+  ============================================
+  */
+
+  let res = await fetch(API_URL, {
+
+    method: "POST",
+
+    body: JSON.stringify(payload)
+
+  });
+
+  let result = await res.json();
+
+  if (result.duplicate) {
+
+    showDuplicateMessage(names.join(", "));
+
+    return;
+
+  }
+
+  scannedFamilies[fid] = names.join(", ");
+
+  lastScanned = fid;
+
+  scanLock = true;
+
+  approvedOverrides = [];
+
+  let color =
+      (arrivedExpected < expected)
+      ? "#ed6c02"
+      : "#2e7d32";
+
+  document.getElementById("familyCard").innerHTML = `
 
 <div style="
 background:${color};
@@ -849,27 +862,48 @@ margin-top:20px;
 text-align:center;
 ">
 
-<h1 style="font-size:42px;margin-bottom:20px">
+<h1 style="
+font-size:42px;
+margin-bottom:20px;
+">
 WELCOME
 </h1>
 
-<div style="font-size:26px;margin-bottom:30px">
+<div style="
+font-size:26px;
+margin-bottom:30px;
+">
 ${primaryName} ${fname} Family
 </div>
 
-<div style="font-size:22px;margin-bottom:20px">
-${names.join(", ")}
+<div style="
+font-size:22px;
+margin-bottom:20px;
+">
+${approvedNames.join(", ")}
 </div>
 
-<div style="font-size:20px;margin-bottom:25px;font-weight:bold;">
+<div style="
+font-size:20px;
+font-weight:bold;
+margin-bottom:25px;
+">
+
 ${
-  arrivedExpected < expected
-    ? `⚠ ${expected - arrivedExpected} Guest Missing`
-    : `All Registered Guests Present`
+arrivedExpected < expected
+?
+`⚠ ${expected-arrivedExpected} Guest Missing`
+:
+`All Registered Guests Present`
 }
+
 </div>
 
 <button
+onclick="
+scanLock=false;
+resetScanner();
+"
 style="
 font-size:22px;
 padding:14px 28px;
@@ -877,19 +911,26 @@ background:white;
 border:none;
 border-radius:8px;
 cursor:pointer;
-"
-onclick="
-scanLock=false;
-resetScanner();
-"
->
+">
+
 SCAN NEXT GUEST
+
 </button>
 
 </div>
+
 `;
 
+return;
+
+/* ==========================================================
+   FROM HERE DOWN IS ONLY USED AFTER HOST HAS APPROVED
+   (submitHostPin() calls submit() again after approval)
+   ========================================================== */
+
 }
+
+
 
 function collapseCamera(){
 
@@ -1204,6 +1245,38 @@ function closePinModal(){
 
 async function sendToHostApproval(){
 
+  /*
+     FIRST write the Attendance Log.
+     Only the YES guests (and any Host-approved overrides)
+     are written.
+  */
+
+  if(window.pendingAttendancePayload){
+
+    let res = await fetch(API_URL,{
+      method:"POST",
+      body:JSON.stringify(window.pendingAttendancePayload)
+    });
+
+    let result = await res.json();
+
+    if(result.duplicate){
+
+      showDuplicateMessage(
+        window.pendingAttendancePayload.names
+      );
+
+      return;
+
+    }
+
+  }
+
+  /*
+     NOW send the pending guest(s)
+     to the Host for approval.
+  */
+
   await fetch(API_URL,{
     method:"POST",
     body: JSON.stringify({
@@ -1218,14 +1291,16 @@ async function sendToHostApproval(){
 
   closePinModal();
 
-  /* MARK FAMILY AS ALREADY PROCESSED */
-scannedFamilies[currentFamilyId] =
-  pendingGuestsGlobal.join(", ");
+  /*
+     Remember this family has already entered.
+  */
 
-/* PREVENT SAME QR IMMEDIATE RE-SCAN */
-lastScanned = currentFamilyId;
+  scannedFamilies[currentFamilyId] =
+    window.pendingAttendancePayload
+      ? window.pendingAttendancePayload.names
+      : "";
 
-  scannedFamilies[currentFamilyId] = pendingGuestsGlobal.join(", ");
+  lastScanned = currentFamilyId;
 
   await loadPendingCount();
 
@@ -1240,27 +1315,53 @@ lastScanned = currentFamilyId;
     text-align:center;
   ">
 
-    <h2 style="font-size:34px;margin-bottom:25px">
+    <h2 style="
+      font-size:34px;
+      margin-bottom:25px;
+    ">
       SENT FOR HOST APPROVAL
     </h2>
 
     <div style="
-      font-size:26px;
+      font-size:24px;
+      margin-bottom:15px;
+    ">
+      Registered Guests Admitted
+    </div>
+
+    <div style="
+      font-size:22px;
+      margin-bottom:30px;
       font-weight:bold;
-      margin-bottom:25px;
+    ">
+      ${
+        window.pendingAttendancePayload
+        ? window.pendingAttendancePayload.names
+        : ""
+      }
+    </div>
+
+    <div style="
+      font-size:24px;
+      margin-bottom:15px;
+    ">
+      Waiting for Host Approval
+    </div>
+
+    <div style="
+      font-size:22px;
+      margin-bottom:30px;
+      color:#ffd54f;
+      font-weight:bold;
     ">
       ${pendingGuestsGlobal.join(", ")}
     </div>
 
-    <div style="font-size:20px;margin-bottom:30px">
-      Waiting for approval from HOST
-    </div>
-
     <button
       onclick="
-scanLock=false;
-resetScanner();
-"
+        scanLock=false;
+        resetScanner();
+      "
       style="
         background:white;
         color:black;
@@ -1273,7 +1374,9 @@ resetScanner();
     </button>
 
   </div>
+
   `;
+
 }
   
 async function submitHostPin(){
@@ -1324,16 +1427,100 @@ return;
 
 async function finalizeSubmissionAfterPin(){
 
-  approvedOverrides = [...pendingGuestsGlobal];
-
   closePinModal();
 
-  await submit(currentFamilyId, currentFamilyName);
+  if(!window.pendingAttendancePayload){
+    return;
+  }
 
-}
+  // Add Host-approved guests
+  const approvedNames = window.pendingAttendancePayload.names
+      ? window.pendingAttendancePayload.names.split(", ").filter(x=>x)
+      : [];
 
-function proceedSubmitAfterPin(){
-  submit(currentFamilyId,currentFamilyName);
+  pendingGuestsGlobal.forEach(g=>{
+    approvedNames.push(g);
+  });
+
+  // Update payload
+  window.pendingAttendancePayload.names = approvedNames.join(", ");
+  window.pendingAttendancePayload.arrived =
+      window.pendingAttendancePayload.registered +
+      pendingGuestsGlobal.length;
+
+  window.pendingAttendancePayload.extra =
+      pendingGuestsGlobal.length;
+
+  // Write attendance
+  let res = await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify(window.pendingAttendancePayload)
+  });
+
+  let result = await res.json();
+
+  if(result.duplicate){
+    showDuplicateMessage(window.pendingAttendancePayload.names);
+    return;
+  }
+
+  scannedFamilies[currentFamilyId] =
+      window.pendingAttendancePayload.names;
+
+  lastScanned = currentFamilyId;
+
+  scanLock = true;
+
+  approvedOverrides = [];
+
+  await loadPendingCount();
+
+  document.getElementById("familyCard").innerHTML = `
+
+<div style="
+background:#2e7d32;
+color:white;
+padding:40px;
+border-radius:12px;
+margin-top:20px;
+text-align:center;
+">
+
+<h1 style="font-size:42px;margin-bottom:20px">
+WELCOME
+</h1>
+
+<div style="font-size:26px;margin-bottom:25px">
+${currentFamilyName} Family
+</div>
+
+<div style="font-size:22px;margin-bottom:25px">
+${window.pendingAttendancePayload.names}
+</div>
+
+<div style="font-size:20px;font-weight:bold;margin-bottom:30px">
+Host Approval Granted
+</div>
+
+<button
+onclick="
+scanLock=false;
+resetScanner();
+"
+style="
+background:white;
+color:black;
+border:none;
+border-radius:8px;
+font-size:22px;
+padding:14px 28px;
+">
+SCAN NEXT GUEST
+</button>
+
+</div>
+`;
+
 }
 
 function openGuestPanel(){
