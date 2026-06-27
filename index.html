@@ -1358,6 +1358,11 @@ async function sendToHostApproval(){
       ? currentFamilyName
       : "Unknown",
 
+    hostFamilyName:
+      guestSearchMode=="family"
+      ? currentFamilyName
+      : "",
+
     guests:pendingGuestsGlobal,
 
     device:userName
