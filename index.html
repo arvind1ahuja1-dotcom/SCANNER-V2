@@ -1685,6 +1685,9 @@ function selectFamily(fid){
 
   closeGuestPanel();
 
+  // Remove the old QR family immediately
+  document.getElementById("familyCard").innerHTML = "";
+
   collapseCamera();
 
   loadFamily(fid);
