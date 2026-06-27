@@ -735,6 +735,8 @@ async function submit(fid, fname) {
 
   const boxes = document.querySelectorAll(".member input[type=checkbox]");
 
+  pendingGuestObjects = [];
+
   let names = [];
   let approvedNames = [];
   let pendingGuests = [];
@@ -777,23 +779,23 @@ async function submit(fid, fname) {
 
     if (box.checked) {
 
-        pendingGuests.push(name);
+    pendingGuests.push(name);
 
-    }
+    pendingGuestObjects.push({
+
+        name: name,
+
+        extra: box.dataset.extra === "true"
+
+    });
+
+}
 
 }
 
   });
 
-  displayedGuests.forEach(g => {
-
-    if (!g.extra) return;
-
-    if (!pendingGuests.includes(g.name)) return;
-
-    extraGuests++;
-
-});
+  extraGuests = pendingGuestObjects.filter(g => g.extra).length;
 
   if (names.length === 0) {
 
@@ -846,28 +848,6 @@ async function submit(fid, fname) {
   */
 
   if (pendingGuests.length > 0) {
-
-    pendingGuestObjects = [];
-
-    boxes.forEach(box => {
-
-        if (!box.checked) return;
-
-        if (box.dataset.expected === "true") return;
-
-        const row = box.closest(".member");
-
-        const name = row.querySelector("span").innerText.trim();
-
-        pendingGuestObjects.push({
-
-            name: name,
-
-            extra: box.dataset.extra === "true"
-
-        });
-
-    });
 
     pendingGuestsGlobal =
         pendingGuestObjects.map(g => g.name);
@@ -1430,7 +1410,7 @@ async function sendToHostApproval(){
       ? currentFamilyName
       : "",
 
-    guests:pendingGuestsGlobal,
+    guests:pendingGuestObjects,
 
     device:userName
 
