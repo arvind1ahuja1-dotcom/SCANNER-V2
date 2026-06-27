@@ -371,13 +371,16 @@ let userName="";
 let activeFunction="";
 let userRole="";
 
-let currentFamilyId="";
-let currentFamilyName="";
+let currentFamilyId = "";
+let currentFamilyName = "";
+
 let approvedOverrides = [];
 
-/* NEW */
 let guestSearchMode = "scanner";
 let enteredGuestName = "";
+
+/* MASTER LIST OF EVERY PERSON CURRENTLY ON THE FAMILY SCREEN */
+let displayedGuests = [];
 
 window.onload = function(){
 
@@ -589,6 +592,28 @@ document.getElementById("scannerGuestBtn").style.display="none";
   
 window.currentPrimaryName = data.members[0]?.name || "";
 
+if (displayedGuests.length === 0) {
+
+    data.members.forEach(m => {
+
+        displayedGuests.push({
+
+            name: m.name,
+
+            attending: m.attending,
+
+            expected: m.attending,
+
+            extra: false
+
+        });
+
+    });
+
+}
+
+data.members = displayedGuests;
+
 let html=`
 <div class="familyCard">
 
@@ -605,18 +630,34 @@ data.members.forEach((m,i)=>{
 
 let isAttending = m.attending;
 
-let bgColor = isAttending ? "#ffffff" : "#fdecea";   // light red
-let textColor = isAttending ? "#000000" : "#c62828"; // dark red
+if (m.extra && typeof m.attending === "undefined") {
+    isAttending = true;
+}
+
+let bgColor;
+
+if (m.extra) {
+
+  bgColor = "#ffd6e7";     // pink for extra guest
+
+} else {
+
+  bgColor = isAttending ? "#ffffff" : "#fdecea";//light red
+
+}
+
+let textColor = isAttending ? "#000000" : "#c62828";//dark red
 
 html+=`
 <label class="member" style="background:${bgColor}; border-radius:8px;">
   <span style="color:${textColor}; font-weight:${isAttending ? "normal" : "bold"};">
     ${m.name}
   </span>
-  <input 
-    type="checkbox" 
-    ${isAttending ? "checked" : ""} 
-    data-expected="${isAttending ? "true" : "false"}"
+  <input
+    type="checkbox"
+    ${isAttending ? "checked" : ""}
+    data-expected="${m.expected ? "true" : "false"}"
+    data-extra="${m.extra ? "true" : "false"}"
     id="m${i}">
 </label>
 `;
@@ -716,43 +757,43 @@ async function submit(fid, fname) {
 
     if (expectedGuest) {
 
-      expected++;
+    expected++;
 
-      if (box.checked) {
+    if (box.checked) {
 
         names.push(name);
+
         approvedNames.push(name);
+
         arrivedExpected++;
-
-      } else {
-
-        absentGuests.push(name);
-
-      }
 
     } else {
 
-      if (box.checked) {
-
-        names.push(name);
-
-        if (approvedOverrides.includes(name)) {
-
-          approvedNames.push(name);
-          arrivedExpected++;
-
-        } else {
-
-          pendingGuests.push(name);
-          extraGuests++;
-
-        }
-
-      }
+        absentGuests.push(name);
 
     }
 
+} else {
+
+    if (box.checked) {
+
+        pendingGuests.push(name);
+
+    }
+
+}
+
   });
+
+  displayedGuests.forEach(g => {
+
+    if (!g.extra) return;
+
+    if (!pendingGuests.includes(g.name)) return;
+
+    extraGuests++;
+
+});
 
   if (names.length === 0) {
 
@@ -1756,24 +1797,39 @@ function selectUnknownGuest(){
 
     closeGuestPanel();
 
-    if(guestSearchMode=="family"){
+    if (guestSearchMode == "family") {
 
-        // Stranger accompanying the currently scanned family
+    if (!displayedGuests.some(g =>
+    g.name.toUpperCase() === enteredGuestName.toUpperCase()
+)) {
 
-        pendingGuestsGlobal = [enteredGuestName];
+    displayedGuests.push({
 
-        pendingFamilyGlobal = currentFamilyName;
+        name: enteredGuestName,
 
-        approvedOverrides = [];
+        attending: true,
 
-        openPinModal(
-            pendingGuestsGlobal,
-            currentFamilyName
-        );
+        expected: false,
 
-        return;
+        extra: true
 
-    }
+    });
+
+}
+
+    renderFamily({
+
+        family: currentFamilyId,
+
+        familyName: currentFamilyName,
+
+        members: displayedGuests
+
+    });
+
+    return;
+
+}
 
     // Total stranger (not accompanying any family)
 
