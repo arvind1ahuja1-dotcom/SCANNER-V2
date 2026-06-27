@@ -493,6 +493,7 @@ await loadPendingCount();
 
 if(!pendingInterval){
   pendingInterval = setInterval(async ()=>{
+    await preloadAttendance();
     await loadPendingCount();
   }, 5000);
 }
