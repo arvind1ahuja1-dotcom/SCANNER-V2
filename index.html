@@ -1683,14 +1683,17 @@ ${f.primary} ${f.familyName}
 
 function selectFamily(fid){
 
-  closeGuestPanel();
+    closeGuestPanel();
 
-  // Remove the old QR family immediately
-  document.getElementById("familyCard").innerHTML = "";
+    document.getElementById("familyCard").innerHTML = "";
 
-  collapseCamera();
+    collapseCamera();
 
-  loadFamily(fid);
+    if(familyCache[fid]){
+        renderFamily(familyCache[fid]);
+    }else{
+        loadFamily(fid);
+    }
 
 }
   
