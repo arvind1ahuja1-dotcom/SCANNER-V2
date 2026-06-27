@@ -783,11 +783,15 @@ async function submit(fid, fname) {
 
     pendingGuestObjects.push({
 
-        name: name,
+    name: name,
 
-        extra: box.dataset.extra === "true"
+    extra: box.dataset.extra === "true",
 
-    });
+    family: currentFamilyId,
+
+    familyName: currentFamilyName
+
+});
 
 }
 
@@ -1363,6 +1367,8 @@ async function sendToHostApproval(){
 
   if(window.pendingAttendancePayload){
 
+console.log(JSON.stringify(pendingGuestObjects, null, 2));
+    
     let res = await fetch(API_URL,{
       method:"POST",
       body:JSON.stringify(window.pendingAttendancePayload)
@@ -1395,26 +1401,11 @@ async function sendToHostApproval(){
 
     func:activeFunction,
 
-    family:
-      guestSearchMode=="family"
-      ? currentFamilyId
-      : "",
-
-    familyName:
-      guestSearchMode=="family"
-      ? currentFamilyName
-      : "Unknown",
-
-    hostFamilyName:
-      guestSearchMode=="family"
-      ? currentFamilyName
-      : "",
-
     guests:pendingGuestObjects,
 
     device:userName
 
-  })
+})
 });
 
   closePinModal();
