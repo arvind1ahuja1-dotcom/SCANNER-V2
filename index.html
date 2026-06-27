@@ -375,6 +375,10 @@ let currentFamilyId="";
 let currentFamilyName="";
 let approvedOverrides = [];
 
+/* NEW */
+let guestSearchMode = "scanner";
+let enteredGuestName = "";
+
 window.onload = function(){
 
 let user = localStorage.getItem("scannerUser");
@@ -1337,16 +1341,29 @@ async function sendToHostApproval(){
   */
 
   await fetch(API_URL,{
-    method:"POST",
-    body: JSON.stringify({
-      action:"requestApproval",
-      func:activeFunction,
-      family:currentFamilyId,
-      familyName:currentFamilyName,
-      guests:pendingGuestsGlobal,
-      device:userName
-    })
-  });
+  method:"POST",
+  body: JSON.stringify({
+
+    action:"requestApproval",
+
+    func:activeFunction,
+
+    family:
+      guestSearchMode=="family"
+      ? currentFamilyId
+      : "",
+
+    familyName:
+      guestSearchMode=="family"
+      ? currentFamilyName
+      : "Unknown",
+
+    guests:pendingGuestsGlobal,
+
+    device:userName
+
+  })
+});
 
   closePinModal();
 
@@ -1584,6 +1601,10 @@ SCAN NEXT GUEST
 
 function openGuestPanel(){
 
+  guestSearchMode = currentFamilyId ? "family" : "scanner";
+
+  enteredGuestName = "";
+
   document.getElementById("guestSearch").value="";
 
   document.getElementById("guestResults").innerHTML="";
@@ -1598,6 +1619,8 @@ async function searchFamilies(){
 
   let txt =
     document.getElementById("guestSearch").value.trim();
+
+  enteredGuestName = txt;
 
   if(txt===""){
     document.getElementById("guestResults").innerHTML="";
@@ -1616,14 +1639,41 @@ async function searchFamilies(){
 
 document.getElementById("guestResults").innerHTML=`
 
-<div style="
+<div
+onclick="selectUnknownGuest()"
+style="
+background:#fff7f2;
+border:2px solid #c62828;
+border-radius:10px;
+width:90%;
+margin:0 auto;
+padding:14px;
+cursor:pointer;
 text-align:center;
-color:#777;
-font-size:22px;
-padding:30px;
 ">
 
-No matching family found
+<div style="
+font-size:24px;
+font-weight:bold;
+color:#c62828;
+">
+NO MATCH
+</div>
+
+<div style="
+margin-top:10px;
+font-size:20px;
+">
+${enteredGuestName}
+</div>
+
+<div style="
+margin-top:6px;
+font-size:18px;
+color:#555;
+">
+Create as New Guest
+</div>
 
 </div>
 
@@ -1694,6 +1744,48 @@ function selectFamily(fid){
     }else{
         loadFamily(fid);
     }
+
+}
+
+function selectUnknownGuest(){
+
+    closeGuestPanel();
+
+    if(guestSearchMode=="family"){
+
+        // Stranger accompanying the currently scanned family
+
+        pendingGuestsGlobal = [enteredGuestName];
+
+        pendingFamilyGlobal = currentFamilyName;
+
+        approvedOverrides = [];
+
+        openPinModal(
+            pendingGuestsGlobal,
+            currentFamilyName
+        );
+
+        return;
+
+    }
+
+    // Total stranger (not accompanying any family)
+
+    currentFamilyId = "";
+
+    currentFamilyName = "Unknown";
+
+    pendingGuestsGlobal = [enteredGuestName];
+
+    pendingFamilyGlobal = "Unknown";
+
+    window.pendingAttendancePayload = null;
+
+    openPinModal(
+        pendingGuestsGlobal,
+        "Unknown"
+    );
 
 }
   
