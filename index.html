@@ -629,7 +629,7 @@ window.currentPrimaryName = data.members[0]?.name || "";
 displayedGuests = data.members.map(m => ({
     name: m.name,
     attending: m.attending,
-    expected: m.attending,
+    expected: true,
     extra: false
 }));
 
