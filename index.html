@@ -419,6 +419,7 @@ if(diff < SESSION_HOURS){
 
 userName = user;
 userRole = localStorage.getItem("scannerRole") || "";
+userMobile = localStorage.getItem("scannerMobile") || "";
 
 document.getElementById("login").style.display="none";
 document.getElementById("scanner").style.display="block";
@@ -475,11 +476,11 @@ return;
 userName = data.name;
 userMobile = mobile;
 userRole = data.role;
-  
-localStorage.setItem("scannerRole", userRole);
 
 /* SAVE SESSION */
 localStorage.setItem("scannerUser", userName);
+localStorage.setItem("scannerMobile", userMobile);
+localStorage.setItem("scannerRole", userRole);
 localStorage.setItem("loginTime", Date.now());
 
 document.getElementById("login").style.display="none";
@@ -1930,6 +1931,7 @@ function logout(){
     if(!confirm("Log out from this scanner?")) return;
 
     localStorage.removeItem("scannerUser");
+    localStorage.removeItem("scannerMobile");
     localStorage.removeItem("scannerRole");
     localStorage.removeItem("loginTime");
 
