@@ -630,6 +630,9 @@ renderFamily(data);
 
 function renderFamily(data){
 
+currentFamilyId = data.family;
+currentFamilyName = data.familyName;
+
 document.getElementById("scannerGuestBtn").style.display="none";
   
 window.currentPrimaryName = data.members[0]?.name || "";
@@ -1872,6 +1875,13 @@ function selectFamily(fid){
 }
 
 function selectUnknownGuest(){
+
+  console.log(
+    "Mode",
+    guestSearchMode,
+    currentFamilyId,
+    currentFamilyName
+);
 
     closeGuestPanel();
 
