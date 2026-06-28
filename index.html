@@ -398,6 +398,9 @@ let hostFamilyName = "";
 let approvedOverrides = [];
 
 let guestSearchMode = "scanner";
+
+let previousScreen = "scanner";
+  
 let enteredGuestName = "";
 
 /* MASTER LIST OF EVERY PERSON CURRENTLY ON THE FAMILY SCREEN */
@@ -1443,8 +1446,30 @@ function openPinModal(guests,familyName){
   document.getElementById("pinModal").style.display = "flex";
 }
 
-function closePinModal(){
-  document.getElementById("pinModal").style.display = "none";
+function closePinModal(reset=true){
+
+    document.getElementById("pinModal").style.display = "none";
+
+    if(!reset) return;
+
+    if(previousScreen=="scanner"){
+
+        resetScanner();
+
+    }else{
+
+        renderFamily({
+
+            family: currentFamilyId,
+
+            familyName: currentFamilyName,
+
+            members: displayedGuests
+
+        });
+
+    }
+
 }
 
 async function sendToHostApproval(){
@@ -1498,7 +1523,7 @@ console.log(JSON.stringify(pendingGuestObjects, null, 2));
 })
 });
 
-  closePinModal();
+  closePinModal(false);
 
   /*
      Remember this family has already entered.
@@ -1740,31 +1765,25 @@ SCAN NEXT GUEST
 
 function openGuestPanel(){
 
-  /*
-     Determine where the + GUESTS button was pressed.
-     If the Family Card is visible, we are in Family mode.
-     Otherwise we are in Scanner mode.
-  */
+    /*
+       Determine where the + GUESTS button was pressed.
+    */
 
-  if(document.querySelector(".familyCard")){
+    previousScreen = document.querySelector(".familyCard")
+        ? "family"
+        : "scanner";
 
-      guestSearchMode = "family";
+    guestSearchMode = previousScreen;
 
-  }else{
+    enteredGuestName = "";
 
-      guestSearchMode = "scanner";
+    document.getElementById("guestSearch").value = "";
 
-  }
+    document.getElementById("guestResults").innerHTML = "";
 
-  enteredGuestName = "";
+    document.getElementById("guestPanel").style.display = "block";
 
-  document.getElementById("guestSearch").value = "";
-
-  document.getElementById("guestResults").innerHTML = "";
-
-  document.getElementById("guestPanel").style.display = "block";
-
-  document.getElementById("guestSearch").focus();
+    document.getElementById("guestSearch").focus();
 
 }
 
