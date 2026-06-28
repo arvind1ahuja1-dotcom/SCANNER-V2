@@ -432,6 +432,14 @@ loadFunction();
 
 }
 
+function toTitleCase(str){
+
+    return String(str || "")
+        .toLowerCase()
+        .replace(/\b\w/g, c => c.toUpperCase());
+
+}
+  
 function validateLogin(){
 
 let m=document.getElementById("mobile").value;
@@ -632,11 +640,16 @@ displayedGuests = data.members.map(m => ({
 
     attending: m.attending,
 
-    // RSVP YES guests are expected.
-    // RSVP NO guests are NOT expected.
-    expected: m.attending,
+    // Preserve values already present.
+    expected:
+        (typeof m.expected === "boolean")
+            ? m.expected
+            : m.attending,
 
-    extra: false
+    extra:
+        (typeof m.extra === "boolean")
+            ? m.extra
+            : false
 
 }));
 
@@ -1701,7 +1714,7 @@ async function searchFamilies(){
   let txt =
     document.getElementById("guestSearch").value.trim();
 
-  enteredGuestName = txt;
+  enteredGuestName = toTitleCase(txt);
 
   if(txt===""){
     document.getElementById("guestResults").innerHTML="";
@@ -1870,27 +1883,26 @@ function selectUnknownGuest(){
 
     displayedGuests.push({
 
-        name: enteredGuestName,
+    name: toTitleCase(enteredGuestName),
 
-        attending: true,
+    attending: true,
 
-        expected: false,
+    expected: false,
 
-        extra: true
+    extra: true
 
-    });
+});
 
-}
+// Simply redraw using the updated list.
+renderFamily({
 
-    renderFamily({
+    family: currentFamilyId,
 
-        family: currentFamilyId,
+    familyName: currentFamilyName,
 
-        familyName: currentFamilyName,
+    members: displayedGuests
 
-        members: displayedGuests
-
-    });
+});
 
     return;
 
