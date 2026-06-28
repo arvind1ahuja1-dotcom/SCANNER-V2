@@ -1702,17 +1702,29 @@ SCAN NEXT GUEST
 
 function openGuestPanel(){
 
-  guestSearchMode = currentFamilyId ? "family" : "scanner";
+  /*
+     Determine where the + GUESTS button was pressed.
+     If the Family Card is visible, we are in Family mode.
+     Otherwise we are in Scanner mode.
+  */
 
-  alert("Mode = " + guestSearchMode + "\nFamily = " + currentFamilyId);
+  if(document.querySelector(".familyCard")){
+
+      guestSearchMode = "family";
+
+  }else{
+
+      guestSearchMode = "scanner";
+
+  }
 
   enteredGuestName = "";
 
-  document.getElementById("guestSearch").value="";
+  document.getElementById("guestSearch").value = "";
 
-  document.getElementById("guestResults").innerHTML="";
+  document.getElementById("guestResults").innerHTML = "";
 
-  document.getElementById("guestPanel").style.display="block";
+  document.getElementById("guestPanel").style.display = "block";
 
   document.getElementById("guestSearch").focus();
 
@@ -1885,11 +1897,8 @@ function selectUnknownGuest(){
     closeGuestPanel();
 
     // Stranger accompanying a scanned family
-    if (
-    currentFamilyId &&
-    (currentFamilyId.startsWith("FAM") ||
-     currentFamilyId.startsWith("BAM"))
-) {
+    // Stranger accompanying an already loaded family
+if (guestSearchMode === "family") {
 
         if (!displayedGuests.some(g =>
             g.name.toUpperCase() === enteredGuestName.toUpperCase()
