@@ -494,7 +494,15 @@ activeFunction=data.id;
 document.getElementById("functionTitle").innerText=data.name;
 
 if(userRole === "HOST"){
-  document.getElementById("hostControls").style.display="block";
+
+    document.getElementById("hostControls").style.display = "block";
+
+}else{
+
+    document.querySelector(
+        "#pinModal button[onclick='submitHostPin()']"
+    ).style.display = "none";
+
 }
 
 resetScanner();
