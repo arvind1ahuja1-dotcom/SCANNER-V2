@@ -1852,20 +1852,31 @@ document.getElementById("scannerGuestBtn").style.display = "none";
   
     // Total stranger (not accompanying any family)
 
-    currentFamilyId = "";
+    // Total stranger (not accompanying any family)
 
-    currentFamilyName = "Unknown";
+currentFamilyId = "";
 
-    pendingGuestsGlobal = [enteredGuestName];
+currentFamilyName = "Unknown";
 
-    pendingFamilyGlobal = "Unknown";
+/* Build guest object that Apps Script expects */
+pendingGuestObjects = [{
+    name: enteredGuestName,
+    extra: true,
+    family: "",
+    familyName: "Unknown"
+}];
 
-    window.pendingAttendancePayload = null;
+/* Used only for display */
+pendingGuestsGlobal = [enteredGuestName];
 
-    openPinModal(
-        pendingGuestsGlobal,
-        "Unknown"
-    );
+pendingFamilyGlobal = "Unknown";
+
+window.pendingAttendancePayload = null;
+
+openPinModal(
+    pendingGuestsGlobal,
+    "Unknown"
+);
 
 }
   
