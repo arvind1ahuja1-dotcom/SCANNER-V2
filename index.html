@@ -627,10 +627,17 @@ document.getElementById("scannerGuestBtn").style.display="none";
 window.currentPrimaryName = data.members[0]?.name || "";
 
 displayedGuests = data.members.map(m => ({
+
     name: m.name,
+
     attending: m.attending,
-    expected: true,
+
+    // RSVP YES guests are expected.
+    // RSVP NO guests are NOT expected.
+    expected: m.attending,
+
     extra: false
+
 }));
 
 data.members = displayedGuests;
