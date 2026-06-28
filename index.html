@@ -1876,7 +1876,11 @@ function selectUnknownGuest(){
     closeGuestPanel();
 
     // Stranger accompanying a scanned family
-    if (guestSearchMode === "family") {
+    if (
+    currentFamilyId &&
+    (currentFamilyId.startsWith("FAM") ||
+     currentFamilyId.startsWith("BAM"))
+) {
 
         if (!displayedGuests.some(g =>
             g.name.toUpperCase() === enteredGuestName.toUpperCase()
@@ -1884,15 +1888,17 @@ function selectUnknownGuest(){
 
             displayedGuests.push({
 
-                name: toTitleCase(enteredGuestName),
+    name: toTitleCase(enteredGuestName),
 
-                attending: true,
+    attending: true,
 
-                expected: false,
+    expected: false,
 
-                extra: true
+    extra: true,
 
-            });
+    family: currentFamilyId
+
+});
 
         }
 
