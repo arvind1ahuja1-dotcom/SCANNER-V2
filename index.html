@@ -488,18 +488,8 @@ activeFunction=data.id;
 
 document.getElementById("functionTitle").innerText=data.name;
 
-if (userRole === "HOST") {
-
-    const hc = document.getElementById("hostControls");
-
-    alert("hostControls found = " + (hc != null));
-
-    hc.style.display = "block";
-
-    hc.style.border = "3px solid red";
-
-    hc.style.background = "yellow";
-
+if(userRole === "HOST"){
+  document.getElementById("hostControls").style.display="block";
 }
 
 resetScanner();
