@@ -822,13 +822,16 @@ async function submit(fid, fname) {
 
   extraGuests = pendingGuestObjects.filter(g => g.extra).length;
 
-  if (names.length === 0) {
+  if (
+    names.length === 0 &&
+    pendingGuests.length === 0
+) {
 
     alert("Please select at least one guest.");
 
     return;
 
-  }
+}
 
   const payload = {
 
