@@ -391,6 +391,7 @@ const API_URL="https://script.google.com/macros/s/AKfycbwfBi1pESnwh8ZMSDPLATpjZH
 const SESSION_HOURS = 6;
 
 let userName="";
+let userMobile="";
 let activeFunction="";
 let userRole="";
 
@@ -471,8 +472,8 @@ return;
 
 }
 
-userName=data.name;
-
+userName = data.name;
+userMobile = mobile;
 userRole = data.role;
   
 localStorage.setItem("scannerRole", userRole);
@@ -1527,7 +1528,13 @@ async function submitHostPin(){
     return;
   }
 
-  let res = await fetch(API_URL+"?action=verifyHostPin&pin="+pin);
+  let res = await fetch(
+    API_URL +
+    "?action=verifyHostPin" +
+    "&mobile=" + encodeURIComponent(userMobile) +
+    "&pin=" + encodeURIComponent(pin)
+);
+  
   let data = await res.json();
 
   if(data.success){
