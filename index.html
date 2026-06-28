@@ -397,6 +397,8 @@ let userRole="";
 
 let currentFamilyId = "";
 let currentFamilyName = "";
+let hostFamilyId = "";
+let hostFamilyName = "";
 
 let approvedOverrides = [];
 
@@ -632,6 +634,8 @@ function renderFamily(data){
 
 currentFamilyId = data.family;
 currentFamilyName = data.familyName;
+hostFamilyId = data.family;
+hostFamilyName = data.familyName;
 
 document.getElementById("scannerGuestBtn").style.display="none";
   
@@ -838,9 +842,9 @@ async function submit(fid, fname) {
 
     extra: box.dataset.extra === "true",
 
-    family: currentFamilyId,
+    family: hostFamilyId,
 
-    familyName: currentFamilyName
+    familyName: hostFamilyName
 
 });
 
@@ -1066,6 +1070,10 @@ displayedGuests = [];
 
 currentFamilyId = "";
 currentFamilyName = "";
+
+hostFamilyId = "";
+hostFamilyName = "";
+  
 window.currentPrimaryName = "";
 
 document.getElementById("reader").style.height="320px";
@@ -1907,13 +1915,16 @@ function selectUnknownGuest(){
 
         displayedGuests.push({
 
-            name: toTitleCase(enteredGuestName),
+    name: toTitleCase(enteredGuestName),
 
-            attending: true,
-            expected: false,
-            extra: true
+    attending: true,
+    expected: false,
+    extra: true,
 
-        });
+    family: hostFamilyId,
+    familyName: hostFamilyName
+
+});
 
         renderFamily({
 
