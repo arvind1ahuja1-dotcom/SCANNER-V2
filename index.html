@@ -637,24 +637,31 @@ document.getElementById("scannerGuestBtn").style.display="none";
   
 window.currentPrimaryName = data.members[0]?.name || "";
 
-displayedGuests = data.members.map(m => ({
+// Build the displayed list only the FIRST time a family is loaded.
+// If we are simply redrawing the Family Card after adding a guest,
+// keep the existing displayedGuests array.
 
-    name: m.name,
+if (displayedGuests.length === 0) {
 
-    attending: m.attending,
+    displayedGuests = data.members.map(m => ({
 
-    // Preserve values already present.
-    expected:
-        (typeof m.expected === "boolean")
-            ? m.expected
-            : m.attending,
+        name: m.name,
 
-    extra:
-        (typeof m.extra === "boolean")
-            ? m.extra
-            : false
+        attending: m.attending,
 
-}));
+        expected:
+            (typeof m.expected === "boolean")
+                ? m.expected
+                : m.attending,
+
+        extra:
+            (typeof m.extra === "boolean")
+                ? m.extra
+                : false
+
+    }));
+
+}
 
 data.members = displayedGuests;
 
@@ -1896,37 +1903,22 @@ function selectUnknownGuest(){
 
     closeGuestPanel();
 
-    // Stranger accompanying a scanned family
-    // Stranger accompanying an already loaded family
-if (guestSearchMode === "family") {
+    if (guestSearchMode === "family") {
 
-        if (!displayedGuests.some(g =>
-            g.name.toUpperCase() === enteredGuestName.toUpperCase()
-        )) {
+        displayedGuests.push({
 
-            displayedGuests.push({
+            name: toTitleCase(enteredGuestName),
 
-    name: toTitleCase(enteredGuestName),
+            attending: true,
+            expected: false,
+            extra: true
 
-    attending: true,
+        });
 
-    expected: false,
-
-    extra: true,
-
-    family: currentFamilyId
-
-});
-
-        }
-
-        // Redraw the family card with the added guest
         renderFamily({
 
             family: currentFamilyId,
-
             familyName: currentFamilyName,
-
             members: displayedGuests
 
         });
@@ -1935,14 +1927,13 @@ if (guestSearchMode === "family") {
 
     }
 
-    // Total stranger (not accompanying any family)
+    // Scanner Screen
 
     collapseCamera();
 
     document.getElementById("scannerGuestBtn").style.display = "none";
 
     currentFamilyId = "";
-
     currentFamilyName = "Unknown";
 
     pendingGuestObjects = [{
@@ -1957,15 +1948,22 @@ if (guestSearchMode === "family") {
 
     }];
 
-    pendingGuestsGlobal = [toTitleCase(enteredGuestName)];
+    pendingGuestsGlobal = [
+
+        toTitleCase(enteredGuestName)
+
+    ];
 
     pendingFamilyGlobal = "Unknown";
 
     window.pendingAttendancePayload = null;
 
     openPinModal(
+
         pendingGuestsGlobal,
+
         "Unknown"
+
     );
 
 }
