@@ -1875,70 +1875,74 @@ function selectUnknownGuest(){
 
     closeGuestPanel();
 
-    if (guestSearchMode == "family") {
+    // Stranger accompanying a scanned family
+    if (guestSearchMode === "family") {
 
-    if (!displayedGuests.some(g =>
-    g.name.toUpperCase() === enteredGuestName.toUpperCase()
-)) {
+        if (!displayedGuests.some(g =>
+            g.name.toUpperCase() === enteredGuestName.toUpperCase()
+        )) {
 
-    displayedGuests.push({
+            displayedGuests.push({
 
-    name: toTitleCase(enteredGuestName),
+                name: toTitleCase(enteredGuestName),
 
-    attending: true,
+                attending: true,
 
-    expected: false,
+                expected: false,
 
-    extra: true
+                extra: true
 
-});
+            });
 
-// Simply redraw using the updated list.
-renderFamily({
+        }
 
-    family: currentFamilyId,
+        // Redraw the family card with the added guest
+        renderFamily({
 
-    familyName: currentFamilyName,
+            family: currentFamilyId,
 
-    members: displayedGuests
+            familyName: currentFamilyName,
 
-});
+            members: displayedGuests
 
-    return;
+        });
 
-}
+        return;
 
-collapseCamera();
-
-document.getElementById("scannerGuestBtn").style.display = "none";
-  
-    // Total stranger (not accompanying any family)
+    }
 
     // Total stranger (not accompanying any family)
 
-currentFamilyId = "";
+    collapseCamera();
 
-currentFamilyName = "Unknown";
+    document.getElementById("scannerGuestBtn").style.display = "none";
 
-/* Build guest object that Apps Script expects */
-pendingGuestObjects = [{
-    name: enteredGuestName,
-    extra: true,
-    family: "",
-    familyName: "Unknown"
-}];
+    currentFamilyId = "";
 
-/* Used only for display */
-pendingGuestsGlobal = [enteredGuestName];
+    currentFamilyName = "Unknown";
 
-pendingFamilyGlobal = "Unknown";
+    pendingGuestObjects = [{
 
-window.pendingAttendancePayload = null;
+        name: toTitleCase(enteredGuestName),
 
-openPinModal(
-    pendingGuestsGlobal,
-    "Unknown"
-);
+        extra: true,
+
+        family: "",
+
+        familyName: "Unknown"
+
+    }];
+
+    pendingGuestsGlobal = [toTitleCase(enteredGuestName)];
+
+    pendingFamilyGlobal = "Unknown";
+
+    window.pendingAttendancePayload = null;
+
+    openPinModal(
+        pendingGuestsGlobal,
+        "Unknown"
+    );
 
 }
   
