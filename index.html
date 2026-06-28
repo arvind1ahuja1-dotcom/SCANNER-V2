@@ -317,7 +317,9 @@ line-height:1.4;
 ">
 </div>
 
-<input id="hostPinInput"
+<input
+id="hostPinInput"
+oninput="validateHostPin()"
 type="tel"
 inputmode="numeric"
 maxlength="6"
@@ -327,9 +329,10 @@ style="width:90%;padding:10px;font-size:20px;text-align:center">
 <br><br>
 
 <button
+id="hostPinBtn"
 onclick="submitHostPin()"
 style="
-background:#2e7d32;
+background:#9ccc65;
 color:white;
 width:90%;
 border:none;
@@ -462,6 +465,23 @@ btn.style.background="#9ccc65";
 
 }
 
+function validateHostPin(){
+
+    const pin = document.getElementById("hostPinInput").value;
+
+    const btn = document.getElementById("hostPinBtn");
+
+    if(pin.length === 6){
+
+        btn.style.background = "#2e7d32";
+
+    }else{
+
+        btn.style.background = "#9ccc65";
+
+    }
+
+}
 
 async function login(){
 
@@ -527,7 +547,15 @@ if(userRole === "HOST"){
 
     document.getElementById("hostControls").style.display = "block";
 
+    document.getElementById("hostPinInput").style.display = "block";
+
+    document.querySelector(
+        "#pinModal button[onclick='submitHostPin()']"
+    ).style.display = "block";
+
 }else{
+
+    document.getElementById("hostPinInput").style.display = "none";
 
     document.querySelector(
         "#pinModal button[onclick='submitHostPin()']"
@@ -1417,6 +1445,9 @@ function openPinModal(guests,familyName){
     guests.join(", ") + " (" + familyName + ")";
 
   document.getElementById("hostPinInput").value = "";
+  
+  document.getElementById("hostPinBtn").style.background = "#9ccc65";
+  
   document.getElementById("pinModal").style.display = "flex";
 }
 
