@@ -156,6 +156,24 @@ padding:14px 28px;
 
 </div>
 
+<button
+id="logoutBtn"
+onclick="logout()"
+style="
+position:fixed;
+left:12px;
+bottom:4px;
+background:transparent;
+color:#666;
+border:none;
+font-size:16px;
+padding:4px 8px;
+z-index:901;
+cursor:pointer;
+">
+⎋ Log Out
+</button>
+
 <div id="familyCard"></div>
 
 <!-- GUEST SEARCH PANEL -->
@@ -1900,6 +1918,18 @@ function closeGuestPanel(){
 
 }
 
+function logout(){
+
+    if(!confirm("Log out from this scanner?")) return;
+
+    localStorage.removeItem("scannerUser");
+    localStorage.removeItem("scannerRole");
+    localStorage.removeItem("loginTime");
+
+    location.reload();
+
+}
+  
 </script>
 
 <div id="approvalPanel" style="
