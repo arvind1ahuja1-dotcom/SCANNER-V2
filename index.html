@@ -1937,13 +1937,19 @@ function selectFamily(fid){
 
     closeGuestPanel();
 
+    // Only discard the temporary guest list when
+    // switching from one family to another.
+    if (guestSearchMode === "family") {
+        displayedGuests = [];
+    }
+
     document.getElementById("familyCard").innerHTML = "";
 
     collapseCamera();
 
-    if(familyCache[fid]){
+    if (familyCache[fid]) {
         renderFamily(familyCache[fid]);
-    }else{
+    } else {
         loadFamily(fid);
     }
 
