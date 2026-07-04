@@ -127,8 +127,9 @@ flex-wrap:wrap;
 ">
 
 <div
+<div
 id="pendingCounter"
-onclick="openApprovalPanel()"
+onclick="pendingCounterClicked()"
 style="
 font-size:18px;
 color:white;
@@ -577,11 +578,16 @@ return;
 
 activeFunction=data.id;
 
+approvedGuests = [];
+rejectedGuests = [];
+
 document.getElementById("functionTitle").innerText=data.name;
 
-if(userRole === "HOST"){
+// Everyone can see the status pills
+document.getElementById("hostControls").style.display = "block";
 
-    document.getElementById("hostControls").style.display = "block";
+// Only HOST users see the Host PIN controls
+if(userRole === "HOST"){
 
     document.getElementById("hostPinInput").style.display = "block";
 
@@ -1293,11 +1299,23 @@ return false; // ✅ ALSO ADD THIS
 
 async function loadPendingCount(){
 
-  let res = await fetch(API_URL+"?action=getPending&func="+activeFunction);
-  let data = await res.json();
+    let res =
+        await fetch(
+            API_URL +
+            "?action=getPending&func=" +
+            activeFunction
+        );
 
-  document.getElementById("pendingCounter").innerText =
-  data.length > 0 ? "Pending 🔴 " + data.length : "No Pending";
+    let data = await res.json();
+
+    document.getElementById("pendingCounter").innerText =
+        "Pending " + data.length;
+
+    document.getElementById("approvedCounter").innerText =
+        "Approved " + approvedGuests.length;
+
+    document.getElementById("rejectedCounter").innerText =
+        "Rejected " + rejectedGuests.length;
 
 }
 
@@ -2074,6 +2092,22 @@ function closeGuestPanel(){
 
 }
 
+function pendingCounterClicked(){
+
+    if(userRole !== "HOST"){
+
+        alert(
+            "Pending approvals are only visible to Hosts."
+        );
+
+        return;
+
+    }
+
+    openApprovalPanel();
+
+}
+  
 function showApprovedList(){
 
 alert(
