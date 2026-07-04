@@ -119,20 +119,59 @@ z-index:9999;
 margin-bottom:15px;
 ">
 
-  <div 
-    id="pendingCounter"
-    onclick="openApprovalPanel()"
-    style="
-      font-size:18px;
-      color:white;
-      background:#c62828;
-      display:inline-block;
-      padding:8px 14px;
-      border-radius:20px;
-      cursor:pointer;
-      margin-bottom:10px
-    ">
-  </div>
+<div style="
+display:flex;
+justify-content:center;
+gap:8px;
+flex-wrap:wrap;
+">
+
+<div
+id="pendingCounter"
+onclick="openApprovalPanel()"
+style="
+font-size:18px;
+color:white;
+background:#c62828;
+display:inline-block;
+padding:8px 14px;
+border-radius:20px;
+cursor:pointer;
+">
+Pending 0
+</div>
+
+<div
+id="approvedCounter"
+onclick="showApprovedList()"
+style="
+font-size:18px;
+color:white;
+background:#2e7d32;
+display:inline-block;
+padding:8px 14px;
+border-radius:20px;
+cursor:pointer;
+">
+Approved 0
+</div>
+
+<div
+id="rejectedCounter"
+onclick="showRejectedList()"
+style="
+font-size:18px;
+color:white;
+background:#6a1b9a;
+display:inline-block;
+padding:8px 14px;
+border-radius:20px;
+cursor:pointer;
+">
+Rejected 0
+</div>
+
+</div>
 
 </div>
 
@@ -405,6 +444,8 @@ let enteredGuestName = "";
 
 /* MASTER LIST OF EVERY PERSON CURRENTLY ON THE FAMILY SCREEN */
 let displayedGuests = [];
+let approvedGuests = [];
+let rejectedGuests = [];
 
 window.onload = function(){
 
@@ -2033,6 +2074,30 @@ function closeGuestPanel(){
 
 }
 
+function showApprovedList(){
+
+alert(
+approvedGuests.length
+?
+approvedGuests.join("\n")
+:
+"No Approved Guests"
+);
+
+}
+
+function showRejectedList(){
+
+alert(
+rejectedGuests.length
+?
+rejectedGuests.join("\n")
+:
+"No Rejected Guests"
+);
+
+}
+  
 function logout(){
 
     if(!confirm("Log out from this scanner?")) return;
