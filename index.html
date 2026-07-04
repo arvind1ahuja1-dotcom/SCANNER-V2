@@ -1391,6 +1391,23 @@ userRole==="HOST"
 
 async function loadApprovalPanel(){
 
+    approvalView = "pending";
+
+    let res = await fetch(
+        API_URL + "?action=getPending&func=" + activeFunction,
+        {cache:"no-store"}
+    );
+
+    pendingData = await res.json();
+
+    openGuestStatusPanel(
+        "Pending Approvals",
+        pendingData,
+        userRole === "HOST"
+    );
+
+}
+
 function closeApprovalPanel(){
 
   document.getElementById("approvalPanel").style.display="none";
