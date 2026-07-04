@@ -444,8 +444,6 @@ let enteredGuestName = "";
 
 /* MASTER LIST OF EVERY PERSON CURRENTLY ON THE FAMILY SCREEN */
 let displayedGuests = [];
-let approvedGuests = [];
-let rejectedGuests = [];
 
 window.onload = function(){
 
@@ -1298,17 +1296,21 @@ return false; // ✅ ALSO ADD THIS
 
 async function loadPendingCount(){
 
-    let res =
-        await fetch(
-            API_URL +
-            "?action=getPending&func=" +
-            activeFunction
-        );
+    let res = await fetch(
+        API_URL +
+        "?action=approvalStatus&func=" +
+        activeFunction,
+        {cache:"no-store"}
+    );
 
     let data = await res.json();
 
+    pendingData = data.pending || [];
+    approvedGuests = data.approved || [];
+    rejectedGuests = data.rejected || [];
+
     document.getElementById("pendingCounter").innerText =
-        "Pending " + data.length;
+        "Pending " + pendingData.length;
 
     document.getElementById("approvedCounter").innerText =
         "Approved " + approvedGuests.length;
@@ -1319,6 +1321,9 @@ async function loadPendingCount(){
 }
 
 let pendingData = [];
+
+let approvedGuests = [];
+let rejectedGuests = [];
 
 let approvalRefreshTimer = null;
 
@@ -2120,25 +2125,45 @@ async function pendingCounterClicked(){
   
 function showApprovedList(){
 
-alert(
-approvedGuests.length
-?
-approvedGuests.join("\n")
-:
-"No Approved Guests"
-);
+    if(approvedGuests.length===0){
+
+        alert("No Approved Guests");
+
+        return;
+
+    }
+
+    alert(
+
+        approvedGuests
+
+            .map(g => g.name + " (" + g.family + ")")
+
+            .join("\n")
+
+    );
 
 }
 
 function showRejectedList(){
 
-alert(
-rejectedGuests.length
-?
-rejectedGuests.join("\n")
-:
-"No Rejected Guests"
-);
+    if(rejectedGuests.length===0){
+
+        alert("No Rejected Guests");
+
+        return;
+
+    }
+
+    alert(
+
+        rejectedGuests
+
+            .map(g => g.name + " (" + g.family + ")")
+
+            .join("\n")
+
+    );
 
 }
   
