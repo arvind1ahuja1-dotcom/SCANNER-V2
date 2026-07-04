@@ -1331,6 +1331,9 @@ async function openApprovalPanel(){
 
   document.getElementById("approvalPanel").style.display = "block";
 
+  document.querySelector("#approvalPanel h2").innerText =
+"Pending Approvals";
+
   document.getElementById("approvalButtons").style.display =
 userRole==="HOST"
 ?
@@ -2125,45 +2128,87 @@ async function pendingCounterClicked(){
   
 function showApprovedList(){
 
-    if(approvedGuests.length===0){
-
-        alert("No Approved Guests");
-
-        return;
-
-    }
-
-    alert(
-
-        approvedGuests
-
-            .map(g => g.name + " (" + g.family + ")")
-
-            .join("\n")
-
+    openGuestStatusPanel(
+        "Approved Guests",
+        approvedGuests,
+        false
     );
 
 }
 
 function showRejectedList(){
 
-    if(rejectedGuests.length===0){
+    openGuestStatusPanel(
+        "Rejected Guests",
+        rejectedGuests,
+        false
+    );
 
-        alert("No Rejected Guests");
+}
 
-        return;
+function openGuestStatusPanel(title,list,hostMode){
+
+    document.getElementById("approvalPanel").style.display="block";
+
+    document.querySelector("#approvalPanel h2").innerText=title;
+
+    document.getElementById("approvalButtons").style.display=
+        hostMode ? "block":"none";
+
+    let html="";
+
+    list.forEach((g,index)=>{
+
+        html+=`
+
+<div
+style="
+display:flex;
+align-items:center;
+padding:14px 12px;
+border-bottom:1px solid #d9d9d9;
+background:${index%2 ? "#f7f7f7":"#ffffff"};
+">
+
+<span
+style="
+flex:1;
+font-size:22px;
+text-align:left;
+">
+
+${g.name} (${g.family})
+
+</span>
+
+</div>
+
+`;
+
+    });
+
+    if(list.length===0){
+
+        html=`
+
+<div
+style="
+padding:40px;
+font-size:24px;
+color:#2e7d32;
+font-weight:bold;
+text-align:center;
+">
+
+No Guests
+
+</div>
+
+`;
 
     }
 
-    alert(
-
-        rejectedGuests
-
-            .map(g => g.name + " (" + g.family + ")")
-
-            .join("\n")
-
-    );
+    document.getElementById("approvalList").innerHTML=html;
 
 }
   
