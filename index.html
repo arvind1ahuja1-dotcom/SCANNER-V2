@@ -1326,6 +1326,13 @@ async function openApprovalPanel(){
 
   document.getElementById("approvalPanel").style.display = "block";
 
+  document.getElementById("approvalButtons").style.display =
+userRole==="HOST"
+?
+"block"
+:
+"none";
+
   await loadApprovalPanel();
 
   if(!approvalRefreshTimer){
@@ -1361,18 +1368,21 @@ async function loadApprovalPanel(){
 
     html += `
 
-<label
+<div
 style="
 display:flex;
 align-items:center;
 padding:14px 12px;
 border-bottom:1px solid #d9d9d9;
 background:${index % 2 ? "#f7f7f7" : "#ffffff"};
-cursor:pointer;
-user-select:none;
 ">
 
-<input
+${
+userRole === "HOST"
+
+?
+
+`<input
 type="checkbox"
 value="${g.row}"
 style="
@@ -1380,7 +1390,18 @@ width:24px;
 height:24px;
 margin-right:14px;
 flex-shrink:0;
+">`
+
+:
+
+`<div
+style="
+width:24px;
+margin-right:14px;
 ">
+</div>`
+
+}
 
 <span
 style="
@@ -1396,7 +1417,7 @@ ${g.name} (${g.family})
 
 </span>
 
-</label>
+</div>
 
 `;
 
@@ -2091,19 +2112,9 @@ function closeGuestPanel(){
 
 }
 
-function pendingCounterClicked(){
+async function pendingCounterClicked(){
 
-    if(userRole !== "HOST"){
-
-        alert(
-            "Pending approvals are only visible to Hosts."
-        );
-
-        return;
-
-    }
-
-    openApprovalPanel();
+    await openApprovalPanel();
 
 }
   
@@ -2162,8 +2173,21 @@ padding:20px;
 
 <br>
 
-<button onclick="approveSelected()" style="background:#2e7d32;color:white">Approve</button>
-<button onclick="rejectSelected()" style="background:#c62828;color:white">Reject</button>
+<div id="approvalButtons">
+
+<button
+onclick="approveSelected()"
+style="background:#2e7d32;color:white">
+Approve
+</button>
+
+<button
+onclick="rejectSelected()"
+style="background:#c62828;color:white">
+Reject
+</button>
+
+</div>
 
 <br><br>
 
