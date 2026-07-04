@@ -1321,6 +1321,8 @@ let rejectedGuests = [];
 
 let approvalRefreshTimer = null;
 
+let approvalView = "pending";
+
 async function openApprovalPanel(){
 
   document.getElementById("approvalPanel").style.display = "block";
@@ -1341,113 +1343,53 @@ userRole==="HOST"
 
     approvalRefreshTimer = setInterval(async ()=>{
 
-      if(
-        document.getElementById("approvalPanel").style.display=="block"
-      ){
-        await loadApprovalPanel();
-      }
+    if(
+        document.getElementById("approvalPanel").style.display!="block"
+    ){
+        return;
+    }
 
-    },2000);
+    switch(approvalView){
+
+    case "pending":
+
+        await loadApprovalPanel();
+
+        break;
+
+    case "approved":
+
+        await loadPendingCount();
+
+        openGuestStatusPanel(
+            "Approved Guests",
+            approvedGuests,
+            false
+        );
+
+        break;
+
+    case "rejected":
+
+        await loadPendingCount();
+
+        openGuestStatusPanel(
+            "Rejected Guests",
+            rejectedGuests,
+            false
+        );
+
+        break;
+
+}
+
+},2000);
 
   }
 
 }
 
 async function loadApprovalPanel(){
-
-  let res = await fetch(
-    API_URL + "?action=getPending&func=" + activeFunction,
-    {cache:"no-store"}
-  );
-
-  let data = await res.json();
-
-  pendingData = data;
-
-  let html = "";
-
-  data.forEach((g,index)=>{
-
-    html += `
-
-<div
-style="
-display:flex;
-align-items:center;
-padding:14px 12px;
-border-bottom:1px solid #d9d9d9;
-background:${index % 2 ? "#f7f7f7" : "#ffffff"};
-">
-
-${
-userRole === "HOST"
-
-?
-
-`<input
-type="checkbox"
-value="${g.row}"
-style="
-width:24px;
-height:24px;
-margin-right:14px;
-flex-shrink:0;
-">`
-
-:
-
-`<div
-style="
-width:24px;
-margin-right:14px;
-">
-</div>`
-
-}
-
-<span
-style="
-flex:1;
-font-size:22px;
-text-align:left;
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis;
-">
-
-${g.name} (${g.family})
-
-</span>
-
-</div>
-
-`;
-
-  });
-
-  if(data.length==0){
-
-    html=`
-
-<div style="
-padding:40px;
-font-size:24px;
-color:#2e7d32;
-font-weight:bold;
-text-align:center;
-">
-
-No Pending Guests
-
-</div>
-
-`;
-
-  }
-
-  document.getElementById("approvalList").innerHTML = html;
-
-}
 
 function closeApprovalPanel(){
 
@@ -2122,6 +2064,8 @@ async function pendingCounterClicked(){
   
 function showApprovedList(){
 
+  approvalView = "approved";
+
     openGuestStatusPanel(
         "Approved Guests",
         approvedGuests,
@@ -2131,6 +2075,8 @@ function showApprovedList(){
 }
 
 function showRejectedList(){
+
+    approvalView = "rejected";
 
     openGuestStatusPanel(
         "Rejected Guests",
@@ -2144,16 +2090,16 @@ function openGuestStatusPanel(title,list,hostMode){
 
     document.getElementById("approvalPanel").style.display="block";
 
-    document.querySelector("#approvalPanel h2").innerText=title;
+    document.querySelector("#approvalPanel h2").innerText = title;
 
-    document.getElementById("approvalButtons").style.display=
-        hostMode ? "block":"none";
+    document.getElementById("approvalButtons").style.display =
+        hostMode ? "block" : "none";
 
     let html="";
 
     list.forEach((g,index)=>{
 
-        html+=`
+        html += `
 
 <div
 style="
@@ -2161,14 +2107,40 @@ display:flex;
 align-items:center;
 padding:14px 12px;
 border-bottom:1px solid #d9d9d9;
-background:${index%2 ? "#f7f7f7":"#ffffff"};
+background:${index%2 ? "#f7f7f7" : "#ffffff"};
 ">
+
+${hostMode ?
+
+`<input
+type="checkbox"
+value="${g.row}"
+style="
+width:24px;
+height:24px;
+margin-right:14px;
+flex-shrink:0;
+">`
+
+:
+
+`<div
+style="
+width:24px;
+margin-right:14px;
+">
+</div>`
+
+}
 
 <span
 style="
 flex:1;
 font-size:22px;
 text-align:left;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
 ">
 
 ${g.name} (${g.family})
@@ -2183,7 +2155,7 @@ ${g.name} (${g.family})
 
     if(list.length===0){
 
-        html=`
+        html = `
 
 <div
 style="
@@ -2202,7 +2174,7 @@ No Guests
 
     }
 
-    document.getElementById("approvalList").innerHTML=html;
+    document.getElementById("approvalList").innerHTML = html;
 
 }
   
