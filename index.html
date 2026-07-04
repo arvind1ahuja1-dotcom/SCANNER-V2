@@ -604,16 +604,42 @@ if(userRole === "HOST"){
 
 resetScanner();
 
+if(!scannerInstance){
+
+    scannerInstance = new Html5QrcodeScanner(
+        "reader",
+        {
+            fps:30,
+            qrbox:{width:320,height:320},
+            rememberLastUsedCamera:true,
+            supportedScanTypes:[
+                Html5QrcodeScanType.SCAN_TYPE_CAMERA,
+                Html5QrcodeScanType.SCAN_TYPE_FILE
+            ],
+            formatsToSupport:[
+                Html5QrcodeSupportedFormats.QR_CODE
+            ]
+        },
+        false
+    );
+
+    scannerInstance.render(onScan);
+
+}
+
 /* preload attendance log */
 await preloadAttendance();
 await preloadFamilies();
 await loadPendingCount();
 
 if(!pendingInterval){
-  pendingInterval = setInterval(async ()=>{
-    await preloadAttendance();
-    await loadPendingCount();
-  }, 2000);
+
+    pendingInterval = setInterval(async ()=>{
+
+        await loadPendingCount();
+
+    },5000);
+
 }
   
 }
@@ -1112,69 +1138,37 @@ return;
 
 function collapseCamera(){
 
-if(scannerInstance){
-try{ scannerInstance.clear(); }catch(e){}
-}
+    // Keep the scanner alive.
+    // Just hide it while the Family Card is displayed.
 
-const reader = document.getElementById("reader");
-reader.innerHTML="";
-reader.style.height="0px";
+    document.getElementById("reader").style.display = "none";
+
 }
 
 function resetScanner(){
 
-let warn = document.getElementById("dupWarning");
-if(warn) warn.remove();
+    let warn = document.getElementById("dupWarning");
+    if(warn) warn.remove();
 
-if(scannerInstance){
-try{ scannerInstance.clear(); }catch(e){}
-}
+    scanLock = false;
+    lastScanned = "";
+    displayedGuests = [];
 
-/* reset scan guards */
-scanLock = false;
-lastScanned = "";
-displayedGuests = [];
+    currentFamilyId = "";
+    currentFamilyName = "";
 
-currentFamilyId = "";
-currentFamilyName = "";
+    hostFamilyId = "";
+    hostFamilyName = "";
 
-hostFamilyId = "";
-hostFamilyName = "";
-  
-window.currentPrimaryName = "";
+    window.currentPrimaryName = "";
 
-document.getElementById("reader").style.height="320px";
+    document.getElementById("scannerGuestBtn").style.display="inline-block";
 
-document.getElementById("scannerGuestBtn").style.display="inline-block";
-  
-document.getElementById("familyCard").innerHTML="";
+    document.getElementById("familyCard").innerHTML="";
 
-/* show scanner controls again */
-document.getElementById("reader").style.display="block";
+    // Simply show the already-running scanner again.
 
-/* clear scanner area */
-const reader=document.getElementById("reader");
-reader.innerHTML="";
-
-/* recreate scanner UI but DO NOT auto-start camera */
-scannerInstance = new Html5QrcodeScanner(
-"reader",
-{
-fps:30,
-qrbox:{width:320,height:320},
-rememberLastUsedCamera:true,
-supportedScanTypes:[
-Html5QrcodeScanType.SCAN_TYPE_CAMERA,
-Html5QrcodeScanType.SCAN_TYPE_FILE
-],
-formatsToSupport:[
-Html5QrcodeSupportedFormats.QR_CODE
-]
-},
-false
-);
-
-scannerInstance.render(onScan);
+    document.getElementById("reader").style.display="block";
 
 }
 
