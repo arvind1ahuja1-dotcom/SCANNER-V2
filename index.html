@@ -604,42 +604,16 @@ if(userRole === "HOST"){
 
 resetScanner();
 
-if(!scannerInstance){
-
-    scannerInstance = new Html5QrcodeScanner(
-        "reader",
-        {
-            fps:30,
-            qrbox:{width:320,height:320},
-            rememberLastUsedCamera:true,
-            supportedScanTypes:[
-                Html5QrcodeScanType.SCAN_TYPE_CAMERA,
-                Html5QrcodeScanType.SCAN_TYPE_FILE
-            ],
-            formatsToSupport:[
-                Html5QrcodeSupportedFormats.QR_CODE
-            ]
-        },
-        false
-    );
-
-    scannerInstance.render(onScan);
-
-}
-
 /* preload attendance log */
 await preloadAttendance();
 await preloadFamilies();
 await loadPendingCount();
 
 if(!pendingInterval){
-
-    pendingInterval = setInterval(async ()=>{
-
-        await loadPendingCount();
-
-    },5000);
-
+  pendingInterval = setInterval(async ()=>{
+    await preloadAttendance();
+    await loadPendingCount();
+  }, 2000);
 }
   
 }
@@ -1138,37 +1112,69 @@ return;
 
 function collapseCamera(){
 
-    // Keep the scanner alive.
-    // Just hide it while the Family Card is displayed.
+if(scannerInstance){
+try{ scannerInstance.clear(); }catch(e){}
+}
 
-    document.getElementById("reader").style.display = "none";
-
+const reader = document.getElementById("reader");
+reader.innerHTML="";
+reader.style.height="0px";
 }
 
 function resetScanner(){
 
-    let warn = document.getElementById("dupWarning");
-    if(warn) warn.remove();
+let warn = document.getElementById("dupWarning");
+if(warn) warn.remove();
 
-    scanLock = false;
-    lastScanned = "";
-    displayedGuests = [];
+if(scannerInstance){
+try{ scannerInstance.clear(); }catch(e){}
+}
 
-    currentFamilyId = "";
-    currentFamilyName = "";
+/* reset scan guards */
+scanLock = false;
+lastScanned = "";
+displayedGuests = [];
 
-    hostFamilyId = "";
-    hostFamilyName = "";
+currentFamilyId = "";
+currentFamilyName = "";
 
-    window.currentPrimaryName = "";
+hostFamilyId = "";
+hostFamilyName = "";
+  
+window.currentPrimaryName = "";
 
-    document.getElementById("scannerGuestBtn").style.display="inline-block";
+document.getElementById("reader").style.height="320px";
 
-    document.getElementById("familyCard").innerHTML="";
+document.getElementById("scannerGuestBtn").style.display="inline-block";
+  
+document.getElementById("familyCard").innerHTML="";
 
-    // Simply show the already-running scanner again.
+/* show scanner controls again */
+document.getElementById("reader").style.display="block";
 
-    document.getElementById("reader").style.display="block";
+/* clear scanner area */
+const reader=document.getElementById("reader");
+reader.innerHTML="";
+
+/* recreate scanner UI but DO NOT auto-start camera */
+scannerInstance = new Html5QrcodeScanner(
+"reader",
+{
+fps:30,
+qrbox:{width:320,height:320},
+rememberLastUsedCamera:true,
+supportedScanTypes:[
+Html5QrcodeScanType.SCAN_TYPE_CAMERA,
+Html5QrcodeScanType.SCAN_TYPE_FILE
+],
+formatsToSupport:[
+Html5QrcodeSupportedFormats.QR_CODE
+]
+},
+false
+);
+
+scannerInstance.render(onScan);
 
 }
 
@@ -1321,14 +1327,9 @@ let rejectedGuests = [];
 
 let approvalRefreshTimer = null;
 
-let approvalView = "pending";
-
 async function openApprovalPanel(){
 
   document.getElementById("approvalPanel").style.display = "block";
-
-  document.querySelector("#approvalPanel h2").innerText =
-"Pending Approvals";
 
   document.getElementById("approvalButtons").style.display =
 userRole==="HOST"
@@ -1343,47 +1344,13 @@ userRole==="HOST"
 
     approvalRefreshTimer = setInterval(async ()=>{
 
-    if(
-        document.getElementById("approvalPanel").style.display!="block"
-    ){
-        return;
-    }
-
-    switch(approvalView){
-
-    case "pending":
-
+      if(
+        document.getElementById("approvalPanel").style.display=="block"
+      ){
         await loadApprovalPanel();
+      }
 
-        break;
-
-    case "approved":
-
-        await loadPendingCount();
-
-        openGuestStatusPanel(
-            "Approved Guests",
-            approvedGuests,
-            false
-        );
-
-        break;
-
-    case "rejected":
-
-        await loadPendingCount();
-
-        openGuestStatusPanel(
-            "Rejected Guests",
-            rejectedGuests,
-            false
-        );
-
-        break;
-
-}
-
-},2000);
+    },2000);
 
   }
 
@@ -1391,20 +1358,97 @@ userRole==="HOST"
 
 async function loadApprovalPanel(){
 
-    approvalView = "pending";
+  let res = await fetch(
+    API_URL + "?action=getPending&func=" + activeFunction,
+    {cache:"no-store"}
+  );
 
-    let res = await fetch(
-        API_URL + "?action=getPending&func=" + activeFunction,
-        {cache:"no-store"}
-    );
+  let data = await res.json();
 
-    pendingData = await res.json();
+  pendingData = data;
 
-    openGuestStatusPanel(
-        "Pending Approvals",
-        pendingData,
-        userRole === "HOST"
-    );
+  let html = "";
+
+  data.forEach((g,index)=>{
+
+    html += `
+
+<div
+style="
+display:flex;
+align-items:center;
+padding:14px 12px;
+border-bottom:1px solid #d9d9d9;
+background:${index % 2 ? "#f7f7f7" : "#ffffff"};
+">
+
+${
+userRole === "HOST"
+
+?
+
+`<input
+type="checkbox"
+value="${g.row}"
+style="
+width:24px;
+height:24px;
+margin-right:14px;
+flex-shrink:0;
+">`
+
+:
+
+`<div
+style="
+width:24px;
+margin-right:14px;
+">
+</div>`
+
+}
+
+<span
+style="
+flex:1;
+font-size:22px;
+text-align:left;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+">
+
+${g.name} (${g.family})
+
+</span>
+
+</div>
+
+`;
+
+  });
+
+  if(data.length==0){
+
+    html=`
+
+<div style="
+padding:40px;
+font-size:24px;
+color:#2e7d32;
+font-weight:bold;
+text-align:center;
+">
+
+No Pending Guests
+
+</div>
+
+`;
+
+  }
+
+  document.getElementById("approvalList").innerHTML = html;
 
 }
 
@@ -2081,117 +2125,45 @@ async function pendingCounterClicked(){
   
 function showApprovedList(){
 
-  approvalView = "approved";
+    if(approvedGuests.length===0){
 
-    openGuestStatusPanel(
-        "Approved Guests",
-        approvedGuests,
-        false
+        alert("No Approved Guests");
+
+        return;
+
+    }
+
+    alert(
+
+        approvedGuests
+
+            .map(g => g.name + " (" + g.family + ")")
+
+            .join("\n")
+
     );
 
 }
 
 function showRejectedList(){
 
-    approvalView = "rejected";
+    if(rejectedGuests.length===0){
 
-    openGuestStatusPanel(
-        "Rejected Guests",
-        rejectedGuests,
-        false
-    );
+        alert("No Rejected Guests");
 
-}
-
-function openGuestStatusPanel(title,list,hostMode){
-
-    document.getElementById("approvalPanel").style.display="block";
-
-    document.querySelector("#approvalPanel h2").innerText = title;
-
-    document.getElementById("approvalButtons").style.display =
-        hostMode ? "block" : "none";
-
-    let html="";
-
-    list.forEach((g,index)=>{
-
-        html += `
-
-<div
-style="
-display:flex;
-align-items:center;
-padding:14px 12px;
-border-bottom:1px solid #d9d9d9;
-background:${index%2 ? "#f7f7f7" : "#ffffff"};
-">
-
-${hostMode ?
-
-`<input
-type="checkbox"
-value="${g.row}"
-style="
-width:24px;
-height:24px;
-margin-right:14px;
-flex-shrink:0;
-">`
-
-:
-
-`<div
-style="
-width:24px;
-margin-right:14px;
-">
-</div>`
-
-}
-
-<span
-style="
-flex:1;
-font-size:22px;
-text-align:left;
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis;
-">
-
-${g.name} (${g.family})
-
-</span>
-
-</div>
-
-`;
-
-    });
-
-    if(list.length===0){
-
-        html = `
-
-<div
-style="
-padding:40px;
-font-size:24px;
-color:#2e7d32;
-font-weight:bold;
-text-align:center;
-">
-
-No Guests
-
-</div>
-
-`;
+        return;
 
     }
 
-    document.getElementById("approvalList").innerHTML = html;
+    alert(
+
+        rejectedGuests
+
+            .map(g => g.name + " (" + g.family + ")")
+
+            .join("\n")
+
+    );
 
 }
   
