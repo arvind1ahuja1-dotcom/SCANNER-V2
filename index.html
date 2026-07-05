@@ -1292,17 +1292,21 @@ return false; // ✅ ALSO ADD THIS
 
 async function loadPendingCount(){
 
-    let res =
-        await fetch(
-            API_URL +
-            "?action=getPending&func=" +
-            activeFunction
-        );
+    let res = await fetch(
+        API_URL +
+        "?action=approvalStatus&func=" +
+        activeFunction,
+        {cache:"no-store"}
+    );
 
     let data = await res.json();
 
+    pendingData = data.pending || [];
+    approvedGuests = data.approved || [];
+    rejectedGuests = data.rejected || [];
+
     document.getElementById("pendingCounter").innerText =
-        "Pending " + data.length;
+        "Pending " + pendingData.length;
 
     document.getElementById("approvedCounter").innerText =
         "Approved " + approvedGuests.length;
@@ -1342,7 +1346,7 @@ userRole==="HOST"
         await loadApprovalPanel();
       }
 
-    },2000);
+    },1000);
 
   }
 
@@ -1455,6 +1459,158 @@ function closeApprovalPanel(){
     approvalRefreshTimer = null;
 
   }
+
+}
+
+let approvedRefreshTimer = null;
+
+async function openApprovedPage(){
+
+    document.getElementById("approvedPanel").style.display="block";
+
+    await loadApprovedPage();
+
+    approvedRefreshTimer = setInterval(async()=>{
+
+        if(document.getElementById("approvedPanel").style.display!="block")
+            return;
+
+        await loadApprovedPage();
+
+    },1000);
+
+}
+
+async function loadApprovedPage(){
+
+    let res = await fetch(
+        API_URL +
+        "?action=approvalStatus&func=" +
+        activeFunction,
+        {cache:"no-store"}
+    );
+
+    let data = await res.json();
+
+    approvedGuests = data.approved || [];
+
+    let html="";
+
+    approvedGuests.forEach((g,index)=>{
+
+        html+=`
+
+<div style="
+padding:14px;
+border-bottom:1px solid #ddd;
+background:${index%2?"#f7f7f7":"white"};
+font-size:22px;
+text-align:left;
+">
+
+✓ ${g.name} (${g.family})
+
+</div>
+
+`;
+
+    });
+
+    if(html==""){
+
+        html="<div style='padding:40px;font-size:24px;'>No Approved Guests</div>";
+
+    }
+
+    document.getElementById("approvedList").innerHTML=html;
+
+}
+
+function closeApprovedPage(){
+
+    document.getElementById("approvedPanel").style.display="none";
+
+    clearInterval(approvedRefreshTimer);
+
+    approvedRefreshTimer=null;
+
+}
+
+let rejectedRefreshTimer=null;
+
+async function openRejectedPage(){
+
+    document.getElementById("rejectedPanel").style.display="block";
+
+    await loadRejectedPage();
+
+    rejectedRefreshTimer=setInterval(async()=>{
+
+        if(
+            document.getElementById("rejectedPanel").style.display!="block"
+        ) return;
+
+        await loadRejectedPage();
+
+    },1000);
+
+}
+
+async function loadRejectedPage(){
+
+    let res=await fetch(
+        API_URL+
+        "?action=approvalStatus&func="+activeFunction,
+        {cache:"no-store"}
+    );
+
+    let data=await res.json();
+
+    rejectedGuests=data.rejected||[];
+
+    let html="";
+
+    rejectedGuests.forEach((g,index)=>{
+
+        html+=`
+
+<div style="
+padding:14px;
+border-bottom:1px solid #ddd;
+background:${index%2?"#f7f7f7":"white"};
+font-size:22px;
+text-align:left;
+">
+
+✗ ${g.name} (${g.family})
+
+</div>
+
+`;
+
+    });
+
+    if(html===""){
+
+        html="<div style='padding:40px;font-size:24px;'>No Rejected Guests</div>";
+
+    }
+
+    document.getElementById("rejectedList").innerHTML=html;
+
+}
+
+function closeRejectedPage(){
+
+    document.getElementById("rejectedPanel").style.display="none";
+
+    if(rejectedRefreshTimer){
+
+        clearInterval(rejectedRefreshTimer);
+
+        rejectedRefreshTimer=null;
+
+    }
 
 }
 
@@ -1729,6 +1885,18 @@ async function submitHostPin(){
 document.getElementById("approvalPanel").style.display="none";
 
 await loadPendingCount();
+
+if(document.getElementById("approvedPanel").style.display==="block"){
+    await loadApprovedPage();
+}
+
+if(document.getElementById("rejectedPanel").style.display==="block"){
+    await loadRejectedPage();
+}
+
+if(document.getElementById("approvalPanel").style.display==="block"){
+    await loadApprovalPanel();
+}
 
 return;
   }
@@ -2117,87 +2285,25 @@ async function pendingCounterClicked(){
   
 function showApprovedList(){
 
-    openGuestStatusPanel(
-        "Approved Guests",
-        approvedGuests,
-        false
-    );
+    closeApprovalPanel();
+    closeRejectedPage();
+
+    openApprovedPage();
 
 }
 
 function showRejectedList(){
 
-    openGuestStatusPanel(
-        "Rejected Guests",
-        rejectedGuests,
-        false
-    );
+    closeApprovalPanel();
+    closeApprovedPage();
+
+    openRejectedPage();
 
 }
 
-function openGuestStatusPanel(title,list,hostMode){
+function showRejectedList(){
 
-    document.getElementById("approvalPanel").style.display="block";
-
-    document.querySelector("#approvalPanel h2").innerText=title;
-
-    document.getElementById("approvalButtons").style.display=
-        hostMode ? "block":"none";
-
-    let html="";
-
-    list.forEach((g,index)=>{
-
-        html+=`
-
-<div
-style="
-display:flex;
-align-items:center;
-padding:14px 12px;
-border-bottom:1px solid #d9d9d9;
-background:${index%2 ? "#f7f7f7":"#ffffff"};
-">
-
-<span
-style="
-flex:1;
-font-size:22px;
-text-align:left;
-">
-
-${g.name} (${g.family})
-
-</span>
-
-</div>
-
-`;
-
-    });
-
-    if(list.length===0){
-
-        html=`
-
-<div
-style="
-padding:40px;
-font-size:24px;
-color:#2e7d32;
-font-weight:bold;
-text-align:center;
-">
-
-No Guests
-
-</div>
-
-`;
-
-    }
-
-    document.getElementById("approvalList").innerHTML=html;
+    openRejectedPage();
 
 }
   
@@ -2251,6 +2357,56 @@ Reject
 <br><br>
 
 <button onclick="closeApprovalPanel()">Close</button>
+
+</div>
+
+<div id="approvedPanel" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:white;
+z-index:9999;
+overflow:auto;
+padding:20px;
+">
+
+<h2>Approved Guests</h2>
+
+<div id="approvedList"></div>
+
+<br>
+
+<button onclick="closeApprovedPage()">
+Close
+</button>
+
+</div>
+
+<div id="rejectedPanel" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:white;
+z-index:9999;
+overflow:auto;
+padding:20px;
+">
+
+<h2>Rejected Guests</h2>
+
+<div id="rejectedList"></div>
+
+<br>
+
+<button onclick="closeRejectedPage()">
+Close
+</button>
 
 </div>
   
