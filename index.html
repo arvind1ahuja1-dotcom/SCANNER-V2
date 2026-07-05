@@ -1327,54 +1327,92 @@ let rejectedGuests = [];
 
 let approvalRefreshTimer = null;
 
+/* Which approval page is currently being viewed */
+let approvalView = "";
+
 async function openApprovalPanel(){
 
-  document.getElementById("approvalPanel").style.display = "block";
+    approvalView = "pending";
 
-  document.getElementById("approvalButtons").style.display =
-userRole==="HOST"
-?
-"block"
-:
-"none";
+    document.getElementById("approvalPanel").style.display = "block";
 
-  await loadApprovalPanel();
+    document.querySelector("#approvalPanel h2").innerText =
+        "Pending Approvals";
 
-  if(!approvalRefreshTimer){
+    document.getElementById("approvalButtons").style.display =
+        (userRole === "HOST") ? "block" : "none";
 
-    approvalRefreshTimer = setInterval(async ()=>{
+    await loadApprovalPanel();
 
-      if(
-        document.getElementById("approvalPanel").style.display=="block"
-      ){
-        await loadApprovalPanel();
-      }
+    if (approvalRefreshTimer) {
+        clearInterval(approvalRefreshTimer);
+    }
 
-    },2000);
+    approvalRefreshTimer = setInterval(async () => {
 
-  }
+    // Stop immediately if panel has been closed.
+    if (
+        document.getElementById("approvalPanel").style.display !== "block"
+    ){
+        clearInterval(approvalRefreshTimer);
+        approvalRefreshTimer = null;
+        return;
+    }
+
+    // Always refresh the counters first.
+    await loadPendingCount();
+
+    switch (approvalView) {
+
+        case "pending":
+            await loadApprovalPanel();
+            break;
+
+        case "approved":
+            renderApprovalList(
+                "Approved Guests",
+                approvedGuests,
+                false
+            );
+            break;
+
+        case "rejected":
+            renderApprovalList(
+                "Rejected Guests",
+                rejectedGuests,
+                false
+            );
+            break;
+    }
+
+},2000);
 
 }
 
 async function loadApprovalPanel(){
 
-  let res = await fetch(
-    API_URL + "?action=getPending&func=" + activeFunction,
-    {cache:"no-store"}
-  );
+    approvalView = "pending";
 
-  let data = await res.json();
+    document.querySelector("#approvalPanel h2").innerText =
+        "Pending Approvals";
 
-  pendingData = data;
+    document.getElementById("approvalButtons").style.display =
+        (userRole === "HOST") ? "block" : "none";
 
-  let html = "";
+    const res = await fetch(
+        API_URL + "?action=getPending&func=" + activeFunction,
+        {cache:"no-store"}
+    );
 
-  data.forEach((g,index)=>{
+    pendingData = await res.json();
 
-    html += `
+    let html = "";
 
-<div
-style="
+    pendingData.forEach((g,index)=>{
+
+        html += `
+
+<div style="
 display:flex;
 align-items:center;
 padding:14px 12px;
@@ -1383,7 +1421,106 @@ background:${index % 2 ? "#f7f7f7" : "#ffffff"};
 ">
 
 ${
-userRole === "HOST"
+(userRole==="HOST")
+
+?
+
+`<input
+type="checkbox"
+value="${g.row}"
+style="
+width:24px;
+height:24px;
+margin-right:14px;
+flex-shrink:0;
+">`
+
+:
+
+`<div style="
+width:24px;
+margin-right:14px;
+"></div>`
+}
+
+<span style="
+flex:1;
+font-size:22px;
+text-align:left;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+">
+
+${g.name} (${g.family})
+
+</span>
+
+</div>
+`;
+
+    });
+
+    if(pendingData.length===0){
+
+        html=`
+
+<div style="
+padding:40px;
+font-size:24px;
+font-weight:bold;
+color:#2e7d32;
+text-align:center;
+">
+
+No Pending Guests
+
+</div>
+
+`;
+
+    }
+
+    renderApprovalList(
+    "Pending Approvals",
+    pendingData,
+    userRole==="HOST"
+);
+
+}
+
+function renderApprovalList(title,list,hostMode){
+
+    approvalView =
+        title.startsWith("Pending")
+        ? "pending"
+        : title.startsWith("Approved")
+        ? "approved"
+        : "rejected";
+
+    document.getElementById("approvalPanel").style.display="block";
+
+    document.querySelector("#approvalPanel h2").innerText = title;
+
+    document.getElementById("approvalButtons").style.display =
+        hostMode ? "block" : "none";
+
+    let html="";
+
+    list.forEach((g,index)=>{
+
+        html += `
+
+<div style="
+display:flex;
+align-items:center;
+padding:14px 12px;
+border-bottom:1px solid #d9d9d9;
+background:${index%2 ? "#f7f7f7" : "#ffffff"};
+">
+
+${
+hostMode
 
 ?
 
@@ -1403,13 +1540,11 @@ flex-shrink:0;
 style="
 width:24px;
 margin-right:14px;
-">
-</div>`
+"></div>`
 
 }
 
-<span
-style="
+<span style="
 flex:1;
 font-size:22px;
 text-align:left;
@@ -1426,29 +1561,29 @@ ${g.name} (${g.family})
 
 `;
 
-  });
+    });
 
-  if(data.length==0){
+    if(list.length===0){
 
-    html=`
+        html=`
 
 <div style="
 padding:40px;
 font-size:24px;
-color:#2e7d32;
 font-weight:bold;
+color:#2e7d32;
 text-align:center;
 ">
 
-No Pending Guests
+No Guests
 
 </div>
 
 `;
 
-  }
+    }
 
-  document.getElementById("approvalList").innerHTML = html;
+    document.getElementById("approvalList").innerHTML=html;
 
 }
 
@@ -2125,44 +2260,20 @@ async function pendingCounterClicked(){
   
 function showApprovedList(){
 
-    if(approvedGuests.length===0){
-
-        alert("No Approved Guests");
-
-        return;
-
-    }
-
-    alert(
-
-        approvedGuests
-
-            .map(g => g.name + " (" + g.family + ")")
-
-            .join("\n")
-
+    renderApprovalList(
+        "Approved Guests",
+        approvedGuests,
+        false
     );
 
 }
 
 function showRejectedList(){
 
-    if(rejectedGuests.length===0){
-
-        alert("No Rejected Guests");
-
-        return;
-
-    }
-
-    alert(
-
-        rejectedGuests
-
-            .map(g => g.name + " (" + g.family + ")")
-
-            .join("\n")
-
+    renderApprovalList(
+        "Rejected Guests",
+        rejectedGuests,
+        false
     );
 
 }
