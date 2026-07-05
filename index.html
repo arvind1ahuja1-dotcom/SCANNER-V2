@@ -444,6 +444,8 @@ let enteredGuestName = "";
 
 /* MASTER LIST OF EVERY PERSON CURRENTLY ON THE FAMILY SCREEN */
 let displayedGuests = [];
+let approvedGuests = [];
+let rejectedGuests = [];
 
 window.onload = function(){
 
@@ -1296,21 +1298,17 @@ return false; // ✅ ALSO ADD THIS
 
 async function loadPendingCount(){
 
-    let res = await fetch(
-        API_URL +
-        "?action=approvalStatus&func=" +
-        activeFunction,
-        {cache:"no-store"}
-    );
+    let res =
+        await fetch(
+            API_URL +
+            "?action=getPending&func=" +
+            activeFunction
+        );
 
     let data = await res.json();
 
-    pendingData = data.pending || [];
-    approvedGuests = data.approved || [];
-    rejectedGuests = data.rejected || [];
-
     document.getElementById("pendingCounter").innerText =
-        "Pending " + pendingData.length;
+        "Pending " + data.length;
 
     document.getElementById("approvedCounter").innerText =
         "Approved " + approvedGuests.length;
@@ -1322,97 +1320,56 @@ async function loadPendingCount(){
 
 let pendingData = [];
 
-let approvedGuests = [];
-let rejectedGuests = [];
-
 let approvalRefreshTimer = null;
-
-/* Which approval page is currently being viewed */
-let approvalView = "";
 
 async function openApprovalPanel(){
 
-    approvalView = "pending";
+  document.getElementById("approvalPanel").style.display = "block";
 
-    document.getElementById("approvalPanel").style.display = "block";
+  document.getElementById("approvalButtons").style.display =
+userRole==="HOST"
+?
+"block"
+:
+"none";
 
-    document.querySelector("#approvalPanel h2").innerText =
-        "Pending Approvals";
+  await loadApprovalPanel();
 
-    document.getElementById("approvalButtons").style.display =
-        (userRole === "HOST") ? "block" : "none";
+  if(!approvalRefreshTimer){
 
-    await loadApprovalPanel();
+    approvalRefreshTimer = setInterval(async ()=>{
 
-    if (approvalRefreshTimer) {
-        clearInterval(approvalRefreshTimer);
-    }
+      if(
+        document.getElementById("approvalPanel").style.display=="block"
+      ){
+        await loadApprovalPanel();
+      }
 
-    approvalRefreshTimer = setInterval(async () => {
+    },2000);
 
-    // Stop immediately if panel has been closed.
-    if (
-        document.getElementById("approvalPanel").style.display !== "block"
-    ){
-        clearInterval(approvalRefreshTimer);
-        approvalRefreshTimer = null;
-        return;
-    }
-
-    // Always refresh the counters first.
-    await loadPendingCount();
-
-    switch (approvalView) {
-
-        case "pending":
-            await loadApprovalPanel();
-            break;
-
-        case "approved":
-            renderApprovalList(
-                "Approved Guests",
-                approvedGuests,
-                false
-            );
-            break;
-
-        case "rejected":
-            renderApprovalList(
-                "Rejected Guests",
-                rejectedGuests,
-                false
-            );
-            break;
-    }
-
-},2000);
+  }
 
 }
 
 async function loadApprovalPanel(){
 
-    approvalView = "pending";
+  let res = await fetch(
+    API_URL + "?action=getPending&func=" + activeFunction,
+    {cache:"no-store"}
+  );
 
-    document.querySelector("#approvalPanel h2").innerText =
-        "Pending Approvals";
+  let data = await res.json();
 
-    document.getElementById("approvalButtons").style.display =
-        (userRole === "HOST") ? "block" : "none";
+  pendingData = data;
 
-    const res = await fetch(
-        API_URL + "?action=getPending&func=" + activeFunction,
-        {cache:"no-store"}
-    );
+  let html = "";
 
-    pendingData = await res.json();
+  data.forEach((g,index)=>{
 
-    let html = "";
+    html += `
 
-    pendingData.forEach((g,index)=>{
-
-        html += `
-
-<div style="
+<div
+style="
 display:flex;
 align-items:center;
 padding:14px 12px;
@@ -1421,106 +1378,7 @@ background:${index % 2 ? "#f7f7f7" : "#ffffff"};
 ">
 
 ${
-(userRole==="HOST")
-
-?
-
-`<input
-type="checkbox"
-value="${g.row}"
-style="
-width:24px;
-height:24px;
-margin-right:14px;
-flex-shrink:0;
-">`
-
-:
-
-`<div style="
-width:24px;
-margin-right:14px;
-"></div>`
-}
-
-<span style="
-flex:1;
-font-size:22px;
-text-align:left;
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis;
-">
-
-${g.name} (${g.family})
-
-</span>
-
-</div>
-`;
-
-    });
-
-    if(pendingData.length===0){
-
-        html=`
-
-<div style="
-padding:40px;
-font-size:24px;
-font-weight:bold;
-color:#2e7d32;
-text-align:center;
-">
-
-No Pending Guests
-
-</div>
-
-`;
-
-    }
-
-    renderApprovalList(
-    "Pending Approvals",
-    pendingData,
-    userRole==="HOST"
-);
-
-}
-
-function renderApprovalList(title,list,hostMode){
-
-    approvalView =
-        title.startsWith("Pending")
-        ? "pending"
-        : title.startsWith("Approved")
-        ? "approved"
-        : "rejected";
-
-    document.getElementById("approvalPanel").style.display="block";
-
-    document.querySelector("#approvalPanel h2").innerText = title;
-
-    document.getElementById("approvalButtons").style.display =
-        hostMode ? "block" : "none";
-
-    let html="";
-
-    list.forEach((g,index)=>{
-
-        html += `
-
-<div style="
-display:flex;
-align-items:center;
-padding:14px 12px;
-border-bottom:1px solid #d9d9d9;
-background:${index%2 ? "#f7f7f7" : "#ffffff"};
-">
-
-${
-hostMode
+userRole === "HOST"
 
 ?
 
@@ -1540,11 +1398,13 @@ flex-shrink:0;
 style="
 width:24px;
 margin-right:14px;
-"></div>`
+">
+</div>`
 
 }
 
-<span style="
+<span
+style="
 flex:1;
 font-size:22px;
 text-align:left;
@@ -1561,29 +1421,29 @@ ${g.name} (${g.family})
 
 `;
 
-    });
+  });
 
-    if(list.length===0){
+  if(data.length==0){
 
-        html=`
+    html=`
 
 <div style="
 padding:40px;
 font-size:24px;
-font-weight:bold;
 color:#2e7d32;
+font-weight:bold;
 text-align:center;
 ">
 
-No Guests
+No Pending Guests
 
 </div>
 
 `;
 
-    }
+  }
 
-    document.getElementById("approvalList").innerHTML=html;
+  document.getElementById("approvalList").innerHTML = html;
 
 }
 
@@ -2260,21 +2120,25 @@ async function pendingCounterClicked(){
   
 function showApprovedList(){
 
-    renderApprovalList(
-        "Approved Guests",
-        approvedGuests,
-        false
-    );
+alert(
+approvedGuests.length
+?
+approvedGuests.join("\n")
+:
+"No Approved Guests"
+);
 
 }
 
 function showRejectedList(){
 
-    renderApprovalList(
-        "Rejected Guests",
-        rejectedGuests,
-        false
-    );
+alert(
+rejectedGuests.length
+?
+rejectedGuests.join("\n")
+:
+"No Rejected Guests"
+);
 
 }
   
