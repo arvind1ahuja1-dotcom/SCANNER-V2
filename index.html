@@ -629,18 +629,35 @@ if(!scannerInstance){
 
 }
 
-/* preload attendance log */
-await preloadAttendance();
-await preloadFamilies();
-await loadPendingCount();
+/* --------------------------------------------------
+   PRELOAD EVERYTHING IN PARALLEL
+-------------------------------------------------- */
 
-if(!pendingInterval){
+try {
 
-    pendingInterval = setInterval(async ()=>{
+    await Promise.all([
+        preloadAttendance(),
+        preloadFamilies(),
+        loadPendingCount()
+    ]);
 
-        await loadPendingCount();
+} catch(err) {
 
-    },5000);
+    console.log("Preload error:", err);
+
+}
+
+/* --------------------------------------------------
+   Start automatic Pending counter refresh
+-------------------------------------------------- */
+
+if (!pendingInterval) {
+
+    pendingInterval = setInterval(() => {
+
+        loadPendingCount();
+
+    }, 5000);
 
 }
   
